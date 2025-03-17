@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Code Scanner</title>
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+</head>
+<body>
+    <h1>QR Code Scanner</h1>
+    <video id="video" width="300" height="200"></video>
+    <p>Scanned result: <span id="result"></span></p>
+
+    <script>
+        const video = document.getElementById('video');
+        const result = document.getElementById('result');
+
+        // Adaloへデータ送信関数
+        function sendToAdalo(scannedText) {
+            window.ReactNativeWebView.postMessage(scannedText);
+        }
+
+        // カメラのアクセスを取得
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => {
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(err => console.error("カメラの取得に失敗しました: ", err));
+
+        // ZXing QRコードリーダーのインスタンス
+        const codeReader = new ZXing.BrowserQRCodeReader();
+
+        // QRコードのスキャンを開始
+        codeReader.decodeFromVideoDevice(null, 'video', (scanResult, err) => {
+            if (scanResult) {
+                result.textContent = scanResult.text;
+                sendToAdalo(scanResult.text);  // Adaloへデータ送信
+            }
+            if (err) {
+                console.error("QRコード読み取りエラー:", err);
+            }
+        });
+    </script>
+</body>
+</html>
