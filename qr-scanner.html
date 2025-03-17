@@ -8,14 +8,16 @@
     <h1>QR Code Scanner</h1>
     <video id="video" width="300" height="200"></video>
     <p>Scanned result: <span id="result"></span></p>
+    <button onclick="copyToClipboard()">Copy to Clipboard</button>
 
     <script>
         const video = document.getElementById('video');
         const result = document.getElementById('result');
 
-        // Adaloへデータ送信関数
-        function sendToAdalo(scannedText) {
-            window.ReactNativeWebView.postMessage(scannedText);
+        function copyToClipboard() {
+            navigator.clipboard.writeText(result.textContent)
+                .then(() => alert("Copied to clipboard!"))
+                .catch(err => console.error("Clipboard copy failed: ", err));
         }
 
         // カメラのアクセスを取得
@@ -33,7 +35,6 @@
         codeReader.decodeFromVideoDevice(null, 'video', (scanResult, err) => {
             if (scanResult) {
                 result.textContent = scanResult.text;
-                sendToAdalo(scanResult.text);  // Adaloへデータ送信
             }
             if (err) {
                 console.error("QRコード読み取りエラー:", err);
