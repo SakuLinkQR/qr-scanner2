@@ -34,11 +34,23 @@
         // QRコードのスキャンを開始
         codeReader.decodeFromVideoDevice(null, 'video', (scanResult, err) => {
             if (scanResult) {
-                result.textContent = scanResult.text;
+                const fullURL = scanResult.text;
 
-                // 追加：Adaloへスキャン結果を送信
-                window.parent.postMessage(scanResult.text, '*');
+                try {
+                    const urlObj = new URL(fullURL);
+                    const idOnly = urlObj.searchParams.get("id");
+
+                    if (idOnly) {
+                        result.textContent = idOnly; // IDだけ表示
+                        window.parent.postMessage(idOnly, '*'); // Adaloへも送信
+                    } else {
+                        result.textContent = "Invalid QR Code (no ID found)";
+                    }
+                } catch (e) {
+                    result.textContent = "Invalid URL format";
+                }
             }
+
             if (err) {
                 console.error("QRコード読み取りエラー:", err);
             }
@@ -46,3 +58,4 @@
     </script>
 </body>
 </html>
+
