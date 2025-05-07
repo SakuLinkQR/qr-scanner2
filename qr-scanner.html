@@ -35,6 +35,9 @@
         codeReader.decodeFromVideoDevice(null, 'video', (scanResult, err) => {
             if (scanResult) {
                 result.textContent = scanResult.text;
+
+                // 追加：Adaloへスキャン結果を送信
+                window.parent.postMessage(scanResult.text, '*');
             }
             if (err) {
                 console.error("QRコード読み取りエラー:", err);
