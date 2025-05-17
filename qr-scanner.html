@@ -2,32 +2,90 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Return to App</title>
+    <title>QR Code Scanner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
-        body {
-            font-family: sans-serif;
-            background-color: #ffffff;
-            color: #333;
+        html, body {
             margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center;
+            padding: 0;
+            font-family: sans-serif;
+            font-size: 18px;
+            background-color: #fff;
         }
 
-        .message {
-            font-size: 16px;
-            line-height: 1.6;
+        h1 {
+            font-size: 18px;
+            text-align: center;
+            margin: 6px 0;
+        }
+
+        #video {
+            width: 90%; /* ← 横幅を画面の80%に縮小 */
+            height: 240px;
+            object-fit: cover;
+            background: black;
+            display: block;
+            margin: 0 auto; /* 中央寄せ */
+            border-radius: 8px;
+        }
+
+        #result {
+            font-size: 18px;
+            text-align: center;
+            margin: 6px 0 4px 0;
+            word-break: break-word;
+        }
+
+        button {
+            display: block;
+            margin: 4px auto 8px auto;
+            padding: 6px 12px;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
-    <div class="message">
-        📱 This screen is not needed.<br>
-        Please tap the <strong>“Done”</strong> button in the top-left corner to return to the app.
-    </div>
+    <h1>QR Code Scanner</h1>
+    <video id="video" autoplay muted playsinline></video>
+    <p>Scanned result: <span id="result"></span></p>
+    <button onclick="copyToClipboard()">Copy to Clipboard</button>
+
+    <script>
+        const video = document.getElementById('video');
+        const result = document.getElementById('result');
+
+        function copyToClipboard() {
+            navigator.clipboard.writeText(result.textContent)
+                .then(() => alert("Copied to clipboard!"))
+                .catch(err => console.error("Clipboard copy failed: ", err));
+        }
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => console.error("カメラの取得に失敗しました: ", err));
+
+        const codeReader = new ZXing.BrowserQRCodeReader();
+
+        codeReader.decodeFromVideoDevice(null, 'video', (scanResult, err) => {
+            if (scanResult) {
+                const fullURL = scanResult.text;
+                try {
+                    const urlObj = new URL(fullURL);
+                    const idOnly = urlObj.searchParams.get("id");
+                    if (idOnly) {
+                        result.textContent = idOnly;
+                        window.parent.postMessage(idOnly, '*');
+                    } else {
+                        result.textContent = "Invalid QR Code (no ID found)";
+                    }
+                } catch (e) {
+                    result.textContent = "Invalid URL format";
+                }
+            }
+        });
+    </script>
 </body>
 </html>
