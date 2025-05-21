@@ -39,7 +39,7 @@
     function onScanSuccess(decodedText, decodedResult) {
       let idCode = decodedText;
 
-      // URL形式から id_code 抽出
+      // URL形式なら id_code を抽出する
       if (decodedText.includes("id_code=")) {
         const match = decodedText.match(/id_code=([^&]+)/);
         if (match) {
@@ -52,13 +52,14 @@
     }
 
     function onScanFailure(error) {
-      // 読み取り失敗時は何もしない（オプション）
+      // スキャン失敗時の処理（オプション）
     }
 
     const html5QrCode = new Html5Qrcode("preview");
     Html5Qrcode.getCameras().then(cameras => {
       if (cameras && cameras.length) {
-        const backCamera = cameras.find(c => c.label.toLowerCase().includes('back')) || cameras[0];
+        // 背面カメラを優先して選択
+        const backCamera = cameras.find(camera => camera.label.toLowerCase().includes('back')) || cameras[0];
 
         html5QrCode.start(
           backCamera.id,
@@ -70,7 +71,7 @@
           onScanFailure
         );
       } else {
-        alert("No camera found.");
+        alert("No camera found on this device.");
       }
     }).catch(err => {
       alert("Camera access error: " + err);
