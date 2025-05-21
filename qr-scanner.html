@@ -1,65 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>QR Scanner - SakuLink</title>
+  <meta charset="UTF-8" />
+  <title>SakuLink QR Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://unpkg.com/@zxing/browser@latest"></script>
   <style>
     body {
       font-family: sans-serif;
-      padding: 20px;
-      max-width: 600px;
-      margin: auto;
       text-align: center;
-    }
-    h1 {
-      color: #ff4081;
-      font-size: 1.8em;
-      margin-bottom: 20px;
+      padding: 30px;
     }
     video {
       width: 100%;
       max-width: 400px;
-      border: 1px solid #ccc;
+      border: 2px solid #ccc;
       border-radius: 10px;
     }
-    .loading {
-      color: gray;
-    }
-    .error {
-      color: red;
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <h1>🌸 SakuLink 🌸<br>QR Code Scanner</h1>
-  <video id="video" muted></video>
-  <p class="loading">Waiting for QR code...</p>
-  <p>Scanned result: <span id="result"></span></p>
+  <video id="video" autoplay playsinline muted></video>
+  <p>Waiting for QR code...</p>
+  <div id="result">Scanned result: <span></span></div>
 
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
   <script>
+    const selectedDeviceId = null;
     const codeReader = new ZXing.BrowserMultiFormatReader();
-    const videoElement = document.getElementById("video");
-    const resultSpan = document.getElementById("result");
+    const videoElement = document.getElementById('video');
+    const resultSpan = document.querySelector('#result span');
 
-    function handleScanResult(scannedText) {
-      const baseUrl = "https://sakulinkqr.github.io/dish-pages/index.html";
-      const url = `${baseUrl}?id_code=${encodeURIComponent(scannedText)}`;
-      window.location.href = url;
-    }
-
-    codeReader.decodeFromVideoDevice(null, videoElement, (result, err) => {
-      if (result) {
-        const scannedCode = result.getText();
-        resultSpan.textContent = scannedCode;
-        handleScanResult(scannedCode);
-        codeReader.reset(); // スキャン後に止める（必要であれば）
-      }
-      if (err && !(err instanceof ZXing.NotFoundException)) {
-        console.error("QR読み取りエラー:", err);
-      }
-    });
+    codeReader
+      .listVideoInputDevices()
+      .then((videoInputDevices) => {
+        const firstDevice = videoInputDevices[0]?.deviceId;
+        return codeReader.decodeFromVideoDevice(firstDevice, videoElement, (result, err) => {
+          if (result) {
+            resultSpan.textContent = result.text;
+            window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(result.text)}`;
+            codeReader.reset(); // 1回読み取ったら停止
+          }
+        });
+      })
+      .catch((err) => {
+        resultSpan.textContent = "Camera error: " + err;
+        console.error(err);
+      });
   </script>
 </body>
 </html>
