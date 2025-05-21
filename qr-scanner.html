@@ -1,44 +1,80 @@
-<script>
-  const resultContainer = document.getElementById("output");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SakuLink QR Scanner</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #ff4081;
+      font-size: 2em;
+    }
+    #preview {
+      width: 300px;
+      height: 250px;
+      border: 1px solid #ccc;
+      margin: 20px auto;
+    }
+    #result {
+      font-size: 1.2em;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
+  <div id="preview"></div>
+  <p>Waiting for QR code...</p>
+  <div id="result">Scanned result: <span id="output"></span></div>
 
-  function onScanSuccess(decodedText, decodedResult) {
-    let idCode = decodedText;
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script>
+    const resultContainer = document.getElementById("output");
 
-    // URL形式なら id_code を抽出する
-    if (decodedText.includes("id_code=")) {
-      const match = decodedText.match(/id_code=([^&]+)/);
-      if (match) {
-        idCode = match[1];
+    function onScanSuccess(decodedText, decodedResult) {
+      let idCode = decodedText;
+
+      // URL形式から id_code 抽出
+      if (decodedText.includes("id_code=")) {
+        const match = decodedText.match(/id_code=([^&]+)/);
+        if (match) {
+          idCode = match[1];
+        }
       }
+
+      resultContainer.innerText = idCode;
+      window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${idCode}`;
     }
 
-    resultContainer.innerText = idCode;
-    window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${idCode}`;
-  }
-
-  function onScanFailure(error) {
-    // スキャン失敗時の処理（オプション）
-  }
-
-  const html5QrCode = new Html5Qrcode("preview");
-  Html5Qrcode.getCameras().then(cameras => {
-    if (cameras && cameras.length) {
-      // 背面カメラ優先
-      const backCamera = cameras.find(c => c.label.toLowerCase().includes('back')) || cameras[0];
-
-      html5QrCode.start(
-        backCamera.id,
-        {
-          fps: 10,
-          qrbox: 250
-        },
-        onScanSuccess,
-        onScanFailure
-      );
-    } else {
-      alert("No camera found on this device.");
+    function onScanFailure(error) {
+      // 読み取り失敗時は何もしない（オプション）
     }
-  }).catch(err => {
-    alert("Camera access error: " + err);
-  });
-</script>
+
+    const html5QrCode = new Html5Qrcode("preview");
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        const backCamera = cameras.find(c => c.label.toLowerCase().includes('back')) || cameras[0];
+
+        html5QrCode.start(
+          backCamera.id,
+          {
+            fps: 10,
+            qrbox: 250
+          },
+          onScanSuccess,
+          onScanFailure
+        );
+      } else {
+        alert("No camera found.");
+      }
+    }).catch(err => {
+      alert("Camera access error: " + err);
+    });
+  </script>
+</body>
+</html>
