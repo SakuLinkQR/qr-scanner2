@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SakuLink QR Scanner</title>
   <style>
     body {
@@ -14,59 +14,59 @@
       color: #ff4081;
       font-size: 2em;
     }
-    video {
-      width: 100%;
-      max-width: 400px;
-      border: 2px solid #ccc;
-      border-radius: 10px;
+    #preview {
+      width: 300px;
+      height: 250px;
+      border: 1px solid #ccc;
+      margin: 20px auto;
     }
     #result {
       font-size: 1.2em;
       margin-top: 20px;
-      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
-  <video id="video" autoplay playsinline muted></video>
-  <p id="result">Waiting for QR code...</p>
+  <div id="preview"></div>
+  <p>Waiting for QR code...</p>
+  <div id="result">Scanned result: <span id="output"></span></div>
 
-  <script type="module">
-    import { BrowserMultiFormatReader } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.0/esm/index.min.js';
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script>
+    const resultContainer = document.getElementById("output");
 
-    const codeReader = new BrowserMultiFormatReader();
-    const resultElement = document.getElementById('result');
+    function onScanSuccess(decodedText, decodedResult) {
+      let idCode = decodedText;
 
-    codeReader.listVideoInputDevices().then(videoInputDevices => {
-      if (!videoInputDevices.length) {
-        resultElement.textContent = "No cameras found.";
-        return;
+      // URLから id_code 抽出（必要なときのみ）
+      if (decodedText.includes("id_code=")) {
+        const match = decodedText.match(/id_code=([^&]+)/);
+        if (match) {
+          idCode = match[1];
+        }
       }
 
-      const selectedDevice = videoInputDevices.find(device =>
-        device.label.toLowerCase().includes('back') ||
-        device.label.toLowerCase().includes('rear') ||
-        device.label.toLowerCase().includes('main')
-      ) || videoInputDevices[0];
+      resultContainer.innerText = idCode;
+      window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${idCode}`;
+    }
 
-      resultElement.textContent = `Using camera: ${selectedDevice.label}`;
+    function onScanFailure(error) {
+      // 失敗時は何もしない
+    }
 
-      codeReader.decodeFromVideoDevice(selectedDevice.deviceId, 'video', (result, err) => {
-        if (result) {
-          let idCode = result.getText();
-          if (idCode.includes("id_code=")) {
-            const match = idCode.match(/id_code=([^&]+)/);
-            if (match) {
-              idCode = match[1];
-            }
-          }
-          resultElement.textContent = `ID: ${idCode}`;
-          window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
-        }
-      });
-    }).catch(err => {
-      resultElement.textContent = `Camera error: ${err.message}`;
+    const html5QrCode = new Html5Qrcode("preview");
+
+    html5QrCode.start(
+      { facingMode: "environment" },  // これが背面カメラ指定
+      {
+        fps: 10,
+        qrbox: 250
+      },
+      onScanSuccess,
+      onScanFailure
+    ).catch(err => {
+      document.getElementById("result").textContent = "Camera error: " + err;
     });
   </script>
 </body>
