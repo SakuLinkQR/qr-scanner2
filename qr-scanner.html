@@ -35,34 +35,41 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
     const resultContainer = document.getElementById("output");
+    const html5QrCode = new Html5Qrcode("preview");
 
     function onScanSuccess(decodedText, decodedResult) {
+      console.log("Raw QR code text:", decodedText);
       let idCode = decodedText;
 
-      // URLから id_code 抽出（必要なときのみ）
       if (decodedText.includes("id_code=")) {
         const match = decodedText.match(/id_code=([^&]+)/);
         if (match) {
           idCode = match[1];
+        } else {
+          resultContainer.innerText = "Invalid QR code format.";
+          console.error("Regex match failed for id_code");
+          return;
         }
       }
 
+      console.log("Extracted idCode:", idCode);
+      idCode = idCode.trim();
       resultContainer.innerText = idCode;
-      window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${idCode}`;
+
+      html5QrCode.stop().then(() => {
+        window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+      }).catch(err => {
+        resultContainer.innerText = "Error stopping camera: " + err;
+      });
     }
 
     function onScanFailure(error) {
       // 失敗時は何もしない
     }
 
-    const html5QrCode = new Html5Qrcode("preview");
-
     html5QrCode.start(
-      { facingMode: "environment" },  // これが背面カメラ指定
-      {
-        fps: 10,
-        qrbox: 250
-      },
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
       onScanSuccess,
       onScanFailure
     ).catch(err => {
