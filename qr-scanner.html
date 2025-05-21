@@ -52,28 +52,24 @@
     }
 
     function onScanFailure(error) {
-      // スキャン失敗時の処理（オプション）
+      // スキャン失敗時は何もしない
     }
 
     const html5QrCode = new Html5Qrcode("preview");
-    Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length) {
-        // 背面カメラを優先して選択
-        const backCamera = cameras.find(camera => camera.label.toLowerCase().includes('back')) || cameras[0];
 
-        html5QrCode.start(
-          backCamera.id,
-          {
-            fps: 10,
-            qrbox: 250
-          },
-          onScanSuccess,
-          onScanFailure
-        );
-      } else {
-        alert("No camera found on this device.");
-      }
-    }).catch(err => {
+    // 背面カメラを明示的に指定
+    const config = {
+      fps: 10,
+      qrbox: 250,
+      facingMode: { exact: "environment" } // 背面カメラを指定
+    };
+
+    html5QrCode.start(
+      { facingMode: "environment" },
+      config,
+      onScanSuccess,
+      onScanFailure
+    ).catch(err => {
       alert("Camera access error: " + err);
     });
   </script>
