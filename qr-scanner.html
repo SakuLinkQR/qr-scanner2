@@ -33,36 +33,60 @@
   <p id="result">Waiting for QR code...</p>
 
   <script type="module">
-    import { BrowserMultiFormatReader } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/esm/index.min.js';
+    import { BrowserMultiFormatReader } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.0/esm/index.min.js';
 
     const codeReader = new BrowserMultiFormatReader();
     const resultElement = document.getElementById('result');
 
-    codeReader
-      .listVideoInputDevices()
-      .then(videoInputDevices => {
-        const backCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('back')) || videoInputDevices[0];
-        return codeReader.decodeFromVideoDevice(backCamera.deviceId, 'video', (result, err) => {
-          if (result) {
-            const text = result.getText();
-            let idCode = text;
-
-            if (text.includes("id_code=")) {
-              const match = text.match(/id_code=([^&]+)/);
-              if (match) {
-                idCode = match[1];
-              }
-            }
-
-            resultElement.textContent = `ID: ${idCode}`;
-            codeReader.reset();
-            window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${idCode}`;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      resultElement.textContent = "Camera not supported in this browser.";
+    } else {
+      codeReader
+        .listVideoInputDevices()
+        .then(videoInputDevices => {
+          if (!videoInputDevices.length) {
+            resultElement.textContent = "No cameras found. Please connect a camera.";
+            return;
           }
+
+          // カメララベルのデバッグ表示
+          console.log("Available cameras:", videoInputDevices.map(device => device.label));
+
+          // 背面カメラを優先して探す
+          const backCamera = videoInputDevices.find(device => 
+            device.label.toLowerCase().includes('back') ||
+            device.label.toLowerCase().includes('rear') ||
+            device.label.toLowerCase().includes('main')
+          ) || videoInputDevices[0];
+
+          resultElement.textContent = `Using camera: ${backCamera.label}`;
+
+          codeReader.decodeFromVideoDevice(backCamera.deviceId, 'video', (result, err) => {
+            if (result) {
+              let idCode = result.getText();
+              if (idCode.includes("id_code=")) {
+                const match = idCode.match(/id_code=([^&]+)/);
+                if (match) {
+                  idCode = match[1];
+                } else {
+                  resultElement.textContent = "Invalid QR code format.";
+                  return;
+                }
+              }
+              resultElement.textContent = `ID: ${idCode}`;
+              window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+            }
+          }, {
+            constraints: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            }
+          });
+        })
+        .catch(err => {
+          resultElement.textContent = `Camera error: ${err.message}. Please ensure camera access is allowed.`;
         });
-      })
-      .catch(err => {
-        resultElement.textContent = "Camera error: " + err;
-      });
+    }
   </script>
 </body>
 </html>
