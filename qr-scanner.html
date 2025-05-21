@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SakuLink QR Scanner</title>
   <style>
     body {
@@ -14,64 +14,55 @@
       color: #ff4081;
       font-size: 2em;
     }
-    #preview {
-      width: 300px;
-      height: 250px;
-      border: 1px solid #ccc;
-      margin: 20px auto;
+    video {
+      width: 100%;
+      max-width: 400px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
     }
     #result {
       font-size: 1.2em;
       margin-top: 20px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
-  <div id="preview"></div>
-  <p>Waiting for QR code...</p>
-  <div id="result">Scanned result: <span id="output"></span></div>
+  <video id="video" autoplay playsinline muted></video>
+  <p id="result">Waiting for QR code...</p>
 
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script>
-    const resultContainer = document.getElementById("output");
+  <script type="module">
+    import { BrowserMultiFormatReader } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/esm/index.min.js';
 
-    function onScanSuccess(decodedText, decodedResult) {
-      let idCode = decodedText;
+    const codeReader = new BrowserMultiFormatReader();
+    const resultElement = document.getElementById('result');
 
-      // URL形式なら id_code を抽出する
-      if (decodedText.includes("id_code=")) {
-        const match = decodedText.match(/id_code=([^&]+)/);
-        if (match) {
-          idCode = match[1];
-        }
-      }
+    codeReader
+      .listVideoInputDevices()
+      .then(videoInputDevices => {
+        const backCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('back')) || videoInputDevices[0];
+        return codeReader.decodeFromVideoDevice(backCamera.deviceId, 'video', (result, err) => {
+          if (result) {
+            const text = result.getText();
+            let idCode = text;
 
-      resultContainer.innerText = idCode;
-      window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${idCode}`;
-    }
+            if (text.includes("id_code=")) {
+              const match = text.match(/id_code=([^&]+)/);
+              if (match) {
+                idCode = match[1];
+              }
+            }
 
-    function onScanFailure(error) {
-      // スキャン失敗時は何もしない
-    }
-
-    const html5QrCode = new Html5Qrcode("preview");
-
-    // 背面カメラを明示的に指定
-    const config = {
-      fps: 10,
-      qrbox: 250,
-      facingMode: { exact: "environment" } // 背面カメラを指定
-    };
-
-    html5QrCode.start(
-      { facingMode: "environment" },
-      config,
-      onScanSuccess,
-      onScanFailure
-    ).catch(err => {
-      alert("Camera access error: " + err);
-    });
+            resultElement.textContent = `ID: ${idCode}`;
+            codeReader.reset();
+            window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${idCode}`;
+          }
+        });
+      })
+      .catch(err => {
+        resultElement.textContent = "Camera error: " + err;
+      });
   </script>
 </body>
 </html>
