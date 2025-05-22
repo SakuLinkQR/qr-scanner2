@@ -46,6 +46,7 @@
 
     function onScanSuccess(decodedText, decodedResult) {
       if (hasRedirected) return;
+      hasRedirected = true;
       console.log("Raw QR code text:", decodedText);
       let idCode = decodedText.trim();
 
@@ -61,9 +62,12 @@
         }
 
         resultContainer.innerText = idCode;
-        hasRedirected = true;
-        window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
 
+        html5QrCode.stop().then(() => {
+          window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+        }).catch(err => {
+          resultContainer.innerText = "カメラの停止に失敗しました: " + err;
+        });
       } catch (e) {
         console.error("URL解析エラー:", e);
         resultContainer.innerText = "QRコードの解析に失敗しました。";
@@ -71,7 +75,7 @@
     }
 
     function onScanFailure(error) {
-      // 読み取り失敗時は静かに無視
+      // 無音でスキャン失敗を無視
     }
 
     html5QrCode.start(
