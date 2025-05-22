@@ -15,9 +15,7 @@
       font-size: 2em;
     }
     #preview {
-      width: 280px;
-      height: 280px;
-      border: 1px solid #ccc;
+      max-width: 280px;
       margin: 20px auto 10px auto;
     }
     #status {
@@ -44,7 +42,7 @@
     const html5QrCode = new Html5Qrcode("preview");
     let hasRedirected = false;
 
-    function onScanSuccess(decodedText, decodedResult) {
+    async function onScanSuccess(decodedText, decodedResult) {
       if (hasRedirected) return;
       hasRedirected = true;
       console.log("Raw QR code text:", decodedText);
@@ -62,15 +60,16 @@
         }
 
         resultContainer.innerText = idCode;
+        statusText.innerText = "読み取り完了、画面を切り替えます...";
 
-        html5QrCode.stop().then(() => {
-          statusText.innerText = "読み取り完了、画面を切り替えます...";
+        try {
+          await html5QrCode.stop();
           setTimeout(() => {
-            location.replace(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
-          }, 500);
-        }).catch(err => {
+            location.assign(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
+          }, 400);
+        } catch (err) {
           resultContainer.innerText = "カメラの停止に失敗しました: " + err;
-        });
+        }
 
       } catch (e) {
         console.error("URL解析エラー:", e);
@@ -84,7 +83,7 @@
 
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 230 },
+      { fps: 10, qrbox: 180 },
       onScanSuccess,
       onScanFailure
     ).then(() => {
