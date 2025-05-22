@@ -8,73 +8,62 @@
     body {
       font-family: sans-serif;
       text-align: center;
+      background-color: #f8f8f8;
       padding: 20px;
     }
-    h1 {
-      color: #ff4081;
-      font-size: 2em;
+    #qr-reader {
+      width: 100%;
+      max-width: 400px;
+      margin: auto;
     }
-    #preview {
-      width: 300px;
-      height: 350px;
-      border: 1px solid #ccc;
-      margin: 20px auto;
+    #scan-result {
+      margin-top: 20px;
+      font-size: 18px;
     }
-    #result {
-      font-size: 1.2em;
+    button {
+      background-color: #d9f2ff;
+      color: #000;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
       margin-top: 20px;
     }
   </style>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
-  <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
-  <div id="preview"></div>
-  <p>Waiting for QR code...</p>
-  <div id="result">Scanned result: <span id="output"></span></div>
+  <h2>SakuLink QR Scanner</h2>
+  <div id="qr-reader"></div>
+  <div id="scan-result">Waiting for QR code...</div>
+  <button onclick="window.open('https://support.google.com/chrome/answer/2693767', '_blank')">
+    カメラの許可をしていない場合はこちら / Allow camera access (help)
+  </button>
 
-  <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
-    const resultContainer = document.getElementById("output");
-    const html5QrCode = new Html5Qrcode("preview");
-
     function onScanSuccess(decodedText, decodedResult) {
-      console.log("Raw QR code text:", decodedText);
-      let idCode = decodedText;
+      document.getElementById('scan-result').innerText = `Scanned: ${decodedText}`;
 
-      if (decodedText.includes("id_code=")) {
-        const match = decodedText.match(/id_code=([^&]+)/);
-        if (match) {
-          idCode = match[1];
-        } else {
-          resultContainer.innerText = "Invalid QR code format.";
-          console.error("Regex match failed for id_code");
-          return;
+      try {
+        let id = decodedText;
+        if (decodedText.startsWith("http")) {
+          const url = new URL(decodedText);
+          id = url.searchParams.get("id");
         }
+        if (id && id.startsWith("2505-J-")) {
+          window.location.href = `https://sakulinkqr.github.io/dish-pages/dish.html?id=${id}`;
+        }
+      } catch (e) {
+        console.error("Error parsing QR code:", e);
       }
-
-      console.log("Extracted idCode:", idCode);
-      idCode = idCode.trim();
-      resultContainer.innerText = idCode;
-
-      html5QrCode.stop().then(() => {
-        window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
-      }).catch(err => {
-        resultContainer.innerText = "Error stopping camera: " + err;
-      });
     }
 
-    function onScanFailure(error) {
-      // 失敗時は何もしない
-    }
-
-    html5QrCode.start(
-      { facingMode: "environment" },
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+      "qr-reader",
       { fps: 10, qrbox: 250 },
-      onScanSuccess,
-      onScanFailure
-    ).catch(err => {
-      document.getElementById("result").textContent = "Camera error: " + err;
-    });
+      /* verbose= */ false
+    );
+    html5QrcodeScanner.render(onScanSuccess);
   </script>
 </body>
 </html>
