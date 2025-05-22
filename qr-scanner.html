@@ -50,6 +50,15 @@
           console.error("Regex match failed for id_code");
           return;
         }
+      } else if (decodedText.includes("id=")) {
+        const match = decodedText.match(/id=([^&]+)/);
+        if (match) {
+          idCode = match[1];
+        } else {
+          resultContainer.innerText = "Invalid QR code format.";
+          console.error("Regex match failed for id");
+          return;
+        }
       }
 
       console.log("Extracted idCode:", idCode);
@@ -57,7 +66,7 @@
       resultContainer.innerText = idCode;
 
       html5QrCode.stop().then(() => {
-        window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+        window.location.href = `https://sakulinkqr.github.io/dish-pages/dish.html?id_code=${encodeURIComponent(idCode)}`;
       }).catch(err => {
         resultContainer.innerText = "Error stopping camera: " + err;
       });
