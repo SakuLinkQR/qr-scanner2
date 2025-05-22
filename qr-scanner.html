@@ -15,15 +15,15 @@
       font-size: 2em;
     }
     #preview {
-      width: 300px;
-      height: 350px;
+      width: 280px;
+      height: 280px;
       border: 1px solid #ccc;
-      margin: 20px auto;
+      margin: 20px auto 10px auto;
     }
     #status {
       font-size: 1em;
       color: gray;
-      margin-top: 10px;
+      margin-bottom: 12px;
     }
     #result {
       font-size: 1.2em;
@@ -33,8 +33,8 @@
 </head>
 <body>
   <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
+  <p id="status">📷 QRコードを白い枠内に入れてください</p>
   <div id="preview"></div>
-  <p id="status">カメラの起動を準備しています...</p>
   <div id="result">Scanned result: <span id="output"></span></div>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -64,9 +64,10 @@
         resultContainer.innerText = idCode;
 
         html5QrCode.stop().then(() => {
+          statusText.innerText = "読み取り完了、画面を切り替えます...";
           setTimeout(() => {
-            window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
-          }, 300);
+            location.replace(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
+          }, 500);
         }).catch(err => {
           resultContainer.innerText = "カメラの停止に失敗しました: " + err;
         });
@@ -83,11 +84,11 @@
 
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
+      { fps: 10, qrbox: 230 },
       onScanSuccess,
       onScanFailure
     ).then(() => {
-      statusText.innerText = "カメラ起動中。QRコードを枠内にかざしてください。";
+      statusText.innerText = "📷 QRコードを白い枠内に入れてください";
     }).catch(err => {
       console.error("カメラエラー:", err);
       statusText.innerText = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
