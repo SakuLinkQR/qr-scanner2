@@ -58,6 +58,7 @@
 
         if (!idCode) {
           resultContainer.innerText = "QRコードにIDが含まれていません。";
+          statusText.innerText = "⚠️ QRコードの形式が正しくありません。";
           return;
         }
 
@@ -65,7 +66,7 @@
         statusText.innerText = "読み取り完了、画面を切り替えます...";
 
         try {
-          await html5QrCode.clear(); // カメラ停止＋DOM破棄
+          await html5QrCode.clear();
           setTimeout(() => {
             location.assign(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
           }, 300);
@@ -76,16 +77,26 @@
       } catch (e) {
         console.error("URL解析エラー:", e);
         resultContainer.innerText = "QRコードの解析に失敗しました。";
+        statusText.innerText = "⚠️ 読み取りエラーが発生しました。";
       }
     }
 
     function onScanFailure(error) {
-      // 無音でスキャン失敗を無視
+      console.log("スキャン失敗:", error);
+      statusText.innerText = "...読み取りを継続中です...";
     }
 
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 180, aspectRatio: 1.0 },
+      {
+        fps: 10,
+        qrbox: 180,
+        aspectRatio: 1.0,
+        videoConstraints: {
+          width: { ideal: 320 },
+          height: { ideal: 320 }
+        }
+      },
       onScanSuccess,
       onScanFailure
     ).then(() => {
