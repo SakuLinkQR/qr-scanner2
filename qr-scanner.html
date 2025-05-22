@@ -48,12 +48,15 @@
         let id = decodedText;
         if (decodedText.startsWith("http")) {
           const url = new URL(decodedText);
-          id = url.searchParams.get("id");
+          id = url.searchParams.get("id") || decodedText;
         }
         if (id && id.startsWith("2505-J-")) {
-          window.location.href = `https://sakulinkqr.github.io/dish-pages/dish.html?id=${id}`;
+          setTimeout(() => {
+            window.location.href = `https://sakulinkqr.github.io/dish-pages/dish.html?id=${id}`;
+          }, 150);
         }
       } catch (e) {
+        alert("QRコードの読み取りでエラーが発生しました。別のコードをお試しください。");
         console.error("Error parsing QR code:", e);
       }
     }
@@ -61,7 +64,7 @@
     let html5QrcodeScanner = new Html5QrcodeScanner(
       "qr-reader",
       { fps: 10, qrbox: 250 },
-      /* verbose= */ false
+      false
     );
     html5QrcodeScanner.render(onScanSuccess);
   </script>
