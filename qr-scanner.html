@@ -39,37 +39,30 @@
 
     function onScanSuccess(decodedText, decodedResult) {
       console.log("Raw QR code text:", decodedText);
-      let idCode = decodedText;
+      let idCode = decodedText.trim();
 
-      if (decodedText.includes("id_code=")) {
-        const match = decodedText.match(/id_code=([^&]+)/);
-        if (match) {
-          idCode = match[1];
-        } else {
-          resultContainer.innerText = "Invalid QR code format.";
-          console.error("Regex match failed for id_code");
+      try {
+        if (decodedText.startsWith("http")) {
+          const url = new URL(decodedText);
+          idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
+        }
+
+        if (!idCode || !idCode.startsWith("2505-J-")) {
+          resultContainer.innerText = "有効なIDがQRコードに含まれていません。";
           return;
         }
-      } else if (decodedText.includes("id=")) {
-        const match = decodedText.match(/id=([^&]+)/);
-        if (match) {
-          idCode = match[1];
-        } else {
-          resultContainer.innerText = "Invalid QR code format.";
-          console.error("Regex match failed for id");
-          return;
-        }
+
+        resultContainer.innerText = idCode;
+
+        html5QrCode.stop().then(() => {
+          window.location.href = `https://sakulinkqr.github.io/dish-pages/dish.html?id_code=${encodeURIComponent(idCode)}`;
+        }).catch(err => {
+          resultContainer.innerText = "Error stopping camera: " + err;
+        });
+      } catch (e) {
+        console.error("URL解析エラー:", e);
+        resultContainer.innerText = "QRコードの解析に失敗しました。";
       }
-
-      console.log("Extracted idCode:", idCode);
-      idCode = idCode.trim();
-      resultContainer.innerText = idCode;
-
-      html5QrCode.stop().then(() => {
-        window.location.href = `https://sakulinkqr.github.io/dish-pages/dish.html?id_code=${encodeURIComponent(idCode)}`;
-      }).catch(err => {
-        resultContainer.innerText = "Error stopping camera: " + err;
-      });
     }
 
     function onScanFailure(error) {
