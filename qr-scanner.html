@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SakuLink QR Scanner</title>
+  <title>SakuLink QR Scanner (Simple Recovery)</title>
   <style>
     body {
       font-family: sans-serif;
@@ -15,8 +15,8 @@
       font-size: 2em;
     }
     #preview {
-      width: 260px;
-      height: 260px;
+      width: 280px;
+      height: 280px;
       border: 1px solid #ccc;
       margin: 20px auto 10px auto;
     }
@@ -32,7 +32,7 @@
   </style>
 </head>
 <body>
-  <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
+  <h1>🌸 SakuLink<br>QR Code Scanner</h1>
   <p id="status">📷 QRコードを白い枠内に入れてください</p>
   <div id="preview"></div>
   <div id="result">Scanned result: <span id="output"></span></div>
@@ -47,42 +47,40 @@
     async function onScanSuccess(decodedText, decodedResult) {
       if (hasRedirected) return;
       hasRedirected = true;
-      console.log("Raw QR code text:", decodedText);
+      console.log("[SUCCESS] QR Text:", decodedText);
       let idCode = decodedText.trim();
 
-      try {
-        if (decodedText.startsWith("http")) {
+      if (decodedText.startsWith("http")) {
+        try {
           const url = new URL(decodedText);
           idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
+        } catch (e) {
+          console.warn("[WARN] URL parse error:", e);
         }
+      }
 
-        if (!idCode) {
-          resultContainer.innerText = "QRコードにIDが含まれていません。";
-          statusText.innerText = "⚠️ QRコードの形式が正しくありません。";
-          return;
-        }
+      if (!idCode) {
+        resultContainer.innerText = "QRコードにIDが含まれていません。";
+        statusText.innerText = "⚠️ QRコードの形式が正しくありません。";
+        return;
+      }
 
-        resultContainer.innerText = idCode;
-        statusText.innerText = "読み取り完了、画面を切り替えます...";
+      resultContainer.innerText = idCode;
+      statusText.innerText = "読み取り完了、画面を切り替えます...";
 
-        try {
-          await html5QrCode.clear();
-          setTimeout(() => {
-            location.assign(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
-          }, 300);
-        } catch (err) {
-          resultContainer.innerText = "カメラの停止に失敗しました: " + err;
-        }
-
-      } catch (e) {
-        console.error("URL解析エラー:", e);
-        resultContainer.innerText = "QRコードの解析に失敗しました。";
-        statusText.innerText = "⚠️ 読み取りエラーが発生しました。";
+      try {
+        await html5QrCode.clear();
+        setTimeout(() => {
+          location.assign(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
+        }, 300);
+      } catch (err) {
+        console.error("[ERROR] Camera clear failed:", err);
+        resultContainer.innerText = "カメラの停止に失敗しました: " + err;
       }
     }
 
     function onScanFailure(error) {
-      console.log("スキャン失敗:", error);
+      console.log("[INFO] Scan attempt failed:", error);
       statusText.innerText = "...読み取りを継続中です...";
     }
 
@@ -91,19 +89,16 @@
       {
         fps: 10,
         qrbox: 180,
-        aspectRatio: 1.0,
-        videoConstraints: {
-          width: { ideal: 320 },
-          height: { ideal: 320 }
-        }
+        aspectRatio: 1.0
       },
       onScanSuccess,
       onScanFailure
     ).then(() => {
+      console.log("[INFO] Camera started");
       statusText.innerText = "📷 QRコードを白い枠内に入れてください";
     }).catch(err => {
-      console.error("カメラエラー:", err);
-      statusText.innerText = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
+      console.error("[ERROR] Camera failed to start:", err);
+      statusText.innerText = "❌ カメラの起動に失敗しました。ブラウザ設定をご確認ください。";
     });
   </script>
 </body>
