@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SakuLink QR Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: sans-serif;
@@ -83,11 +83,16 @@
 
         resultContainer.innerText = idCode;
         hasRedirected = true;
+        statusText.innerText = "読み取り完了、画面を切り替えます...";
 
-        // 遷移を少し遅らせる（Android対応）
-        setTimeout(() => {
-          window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
-        }, 500);
+        html5QrCode.stop().then(() => {
+          setTimeout(() => {
+            window.location.assign(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
+          }, 300);
+        }).catch(err => {
+          console.error("カメラ停止エラー:", err);
+          window.location.assign(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
+        });
 
       } catch (e) {
         console.error("URL解析エラー:", e);
