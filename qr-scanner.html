@@ -39,66 +39,76 @@
 
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
+    // DOM要素の取得
     const resultContainer = document.getElementById("output");
     const statusText = document.getElementById("status");
     const html5QrCode = new Html5Qrcode("preview");
     let hasRedirected = false;
-    let hasRestarted = false;
 
+    // スキャナーを開始する関数
     function startScanner() {
       html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
+        { facingMode: "environment" }, // 背面カメラを使用
+        { fps: 10, qrbox: 250 }, // スキャンのフレームレートとQRコードの読み取りエリア
         onScanSuccess,
         onScanFailure
       ).then(() => {
         statusText.innerText = "カメラ起動中。QRコードを枠内にかざしてください。";
       }).catch(err => {
-        if (err.includes("ongoing") && !hasRestarted) {
-          hasRestarted = true;
-          html5QrCode.stop().then(() => {
-            startScanner();
-          });
-        } else {
-          console.error("カメラエラー:", err);
-          statusText.innerText = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
-        }
+        console.error("カメラエラー:", err);
+        statusText.innerText = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
       });
     }
 
+    // QRコードの読み取り成功時の処理
     function onScanSuccess(decodedText, decodedResult) {
-      if (hasRedirected) return;
+      if (hasRedirected) return; // 既にリダイレクト済みの場合は処理をスキップ
+      hasRedirected = true; // リダイレクトフラグを立てる
+
+      console.log("Raw QR code text:", decodedText);
       let idCode = decodedText.trim();
 
       try {
+        // QRコードがURL形式の場合、クエリパラメータからIDを抽出
         if (decodedText.startsWith("http")) {
           const url = new URL(decodedText);
           idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
         }
 
+        // IDが空の場合、エラーメッセージを表示して終了
         if (!idCode) {
           resultContainer.innerText = "QRコードにIDが含まれていません。";
+          hasRedirected = false; // リトライを許可
           return;
         }
 
+        // スキャン結果を画面に表示
         resultContainer.innerText = idCode;
-        hasRedirected = true;
 
-        // 遷移を少し遅らせる（Android対応）
-        setTimeout(() => {
+        // スキャナーを停止してからリダイレクト
+        html5QrCode.stop().then(() => {
+          console.log("スキャナーを停止しました");
           window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
-        }, 500);
+        }).catch(err => {
+          console.error("スキャナー停止エラー:", err);
+          resultContainer.innerText = "スキャナーの停止に失敗しました。";
+          hasRedirected = false; // リトライを許可
+        });
 
       } catch (e) {
         console.error("URL解析エラー:", e);
         resultContainer.innerText = "QRコードの解析に失敗しました。";
+        hasRedirected = false; // リトライを許可
       }
     }
 
+    // QRコードの読み取り失敗時の処理（エラーは無視）
     function onScanFailure(error) {
-      // 読み取り失敗時は静かに無視
+      // 読み取り失敗時は何もしない
+      console.debug("スキャン失敗:", error);
     }
 
+    // スキャナーを起動
     startScanner();
   </script>
 </body>
