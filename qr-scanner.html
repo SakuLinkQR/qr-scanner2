@@ -20,11 +20,6 @@
       border: 1px solid #ccc;
       margin: 20px auto;
     }
-    #status {
-      font-size: 1em;
-      color: gray;
-      margin-top: 10px;
-    }
     #result {
       font-size: 1.2em;
       margin-top: 20px;
@@ -34,40 +29,18 @@
 <body>
   <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
   <div id="preview"></div>
-  <p id="status">カメラの起動を準備しています...</p>
+  <p>Waiting for QR code...</p>
   <div id="result">Scanned result: <span id="output"></span></div>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
     const resultContainer = document.getElementById("output");
-    const statusText = document.getElementById("status");
     const html5QrCode = new Html5Qrcode("preview");
     let hasRedirected = false;
-    let hasRestarted = false;
-
-    function startScanner() {
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        onScanSuccess,
-        onScanFailure
-      ).then(() => {
-        statusText.innerText = "カメラ起動中。QRコードを枠内にかざしてください。";
-      }).catch(err => {
-        if (err.includes("ongoing") && !hasRestarted) {
-          hasRestarted = true;
-          html5QrCode.stop().then(() => {
-            startScanner();
-          });
-        } else {
-          console.error("カメラエラー:", err);
-          statusText.innerText = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
-        }
-      });
-    }
 
     function onScanSuccess(decodedText, decodedResult) {
       if (hasRedirected) return;
+      console.log("Raw QR code text:", decodedText);
       let idCode = decodedText.trim();
 
       try {
@@ -83,16 +56,7 @@
 
         resultContainer.innerText = idCode;
         hasRedirected = true;
-        statusText.innerText = "読み取り完了、画面を切り替えます...";
-
-        html5QrCode.stop().then(() => {
-          setTimeout(() => {
-            window.location.assign(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
-          }, 300);
-        }).catch(err => {
-          console.error("カメラ停止エラー:", err);
-          window.location.assign(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
-        });
+        window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
 
       } catch (e) {
         console.error("URL解析エラー:", e);
@@ -104,7 +68,14 @@
       // 読み取り失敗時は静かに無視
     }
 
-    startScanner();
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      onScanSuccess,
+      onScanFailure
+    ).catch(err => {
+      document.getElementById("result").textContent = "Camera error: " + err;
+    });
   </script>
 </body>
 </html>
