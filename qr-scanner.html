@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SakuLink QR Scanner (Simple Recovery)</title>
+  <title>SakuLink QR Scanner</title>
   <style>
     body {
       font-family: sans-serif;
@@ -15,15 +15,15 @@
       font-size: 2em;
     }
     #preview {
-      width: 280px;
-      height: 280px;
+      width: 300px;
+      height: 350px;
       border: 1px solid #ccc;
-      margin: 20px auto 10px auto;
+      margin: 20px auto;
     }
     #status {
       font-size: 1em;
       color: gray;
-      margin-bottom: 12px;
+      margin-top: 10px;
     }
     #result {
       font-size: 1.2em;
@@ -32,9 +32,9 @@
   </style>
 </head>
 <body>
-  <h1>🌸 SakuLink<br>QR Code Scanner</h1>
-  <p id="status">📷 QRコードを白い枠内に入れてください</p>
+  <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
   <div id="preview"></div>
+  <p id="status">カメラの起動を準備しています...</p>
   <div id="result">Scanned result: <span id="output"></span></div>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -44,62 +44,57 @@
     const html5QrCode = new Html5Qrcode("preview");
     let hasRedirected = false;
 
-    async function onScanSuccess(decodedText, decodedResult) {
+    function startScanner() {
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        onScanSuccess,
+        onScanFailure
+      ).then(() => {
+        statusText.innerText = "カメラ起動中。QRコードを枠内にかざしてください。";
+      }).catch(err => {
+        if (err.includes("ongoing")) {
+          html5QrCode.stop().then(() => {
+            startScanner();
+          });
+        } else {
+          console.error("カメラエラー:", err);
+          statusText.innerText = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
+        }
+      });
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
       if (hasRedirected) return;
-      hasRedirected = true;
-      console.log("[SUCCESS] QR Text:", decodedText);
+      console.log("Raw QR code text:", decodedText);
       let idCode = decodedText.trim();
 
-      if (decodedText.startsWith("http")) {
-        try {
+      try {
+        if (decodedText.startsWith("http")) {
           const url = new URL(decodedText);
           idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
-        } catch (e) {
-          console.warn("[WARN] URL parse error:", e);
         }
-      }
 
-      if (!idCode) {
-        resultContainer.innerText = "QRコードにIDが含まれていません。";
-        statusText.innerText = "⚠️ QRコードの形式が正しくありません。";
-        return;
-      }
+        if (!idCode) {
+          resultContainer.innerText = "QRコードにIDが含まれていません。";
+          return;
+        }
 
-      resultContainer.innerText = idCode;
-      statusText.innerText = "読み取り完了、画面を切り替えます...";
+        resultContainer.innerText = idCode;
+        hasRedirected = true;
+        window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
 
-      try {
-        await html5QrCode.clear();
-        setTimeout(() => {
-          location.assign(`https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`);
-        }, 300);
-      } catch (err) {
-        console.error("[ERROR] Camera clear failed:", err);
-        resultContainer.innerText = "カメラの停止に失敗しました: " + err;
+      } catch (e) {
+        console.error("URL解析エラー:", e);
+        resultContainer.innerText = "QRコードの解析に失敗しました。";
       }
     }
 
     function onScanFailure(error) {
-      console.log("[INFO] Scan attempt failed:", error);
-      statusText.innerText = "...読み取りを継続中です...";
+      // 読み取り失敗時は静かに無視
     }
 
-    html5QrCode.start(
-      { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: 180,
-        aspectRatio: 1.0
-      },
-      onScanSuccess,
-      onScanFailure
-    ).then(() => {
-      console.log("[INFO] Camera started");
-      statusText.innerText = "📷 QRコードを白い枠内に入れてください";
-    }).catch(err => {
-      console.error("[ERROR] Camera failed to start:", err);
-      statusText.innerText = "❌ カメラの起動に失敗しました。ブラウザ設定をご確認ください。";
-    });
+    startScanner();
   </script>
 </body>
 </html>
