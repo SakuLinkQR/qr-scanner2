@@ -20,6 +20,11 @@
       border: 1px solid #ccc;
       margin: 20px auto;
     }
+    #status {
+      font-size: 1em;
+      color: gray;
+      margin-top: 10px;
+    }
     #result {
       font-size: 1.2em;
       margin-top: 20px;
@@ -29,18 +34,21 @@
 <body>
   <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
   <div id="preview"></div>
-  <p>Waiting for QR code...</p>
+  <p id="status">
+    カメラの起動を準備しています...<br>
+    <small style="color:gray">※最初の読み取りには数秒かかることがあります。</small>
+  </p>
   <div id="result">Scanned result: <span id="output"></span></div>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
     const resultContainer = document.getElementById("output");
+    const statusText = document.getElementById("status");
     const html5QrCode = new Html5Qrcode("preview");
     let hasRedirected = false;
 
     function onScanSuccess(decodedText, decodedResult) {
       if (hasRedirected) return;
-      console.log("Raw QR code text:", decodedText);
       let idCode = decodedText.trim();
 
       try {
@@ -73,8 +81,10 @@
       { fps: 10, qrbox: 250 },
       onScanSuccess,
       onScanFailure
-    ).catch(err => {
-      document.getElementById("result").textContent = "Camera error: " + err;
+    ).then(() => {
+      statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。";
+    }).catch(err => {
+      statusText.textContent = "Camera error: " + err;
     });
   </script>
 </body>
