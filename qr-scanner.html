@@ -68,7 +68,6 @@
 
     function onScanSuccess(decodedText, decodedResult) {
       if (hasRedirected) return;
-      console.log("Raw QR code text:", decodedText);
       let idCode = decodedText.trim();
 
       try {
@@ -84,7 +83,11 @@
 
         resultContainer.innerText = idCode;
         hasRedirected = true;
-        window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+
+        // 遷移を少し遅らせる（Android対応）
+        setTimeout(() => {
+          window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+        }, 500);
 
       } catch (e) {
         console.error("URL解析エラー:", e);
