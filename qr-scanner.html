@@ -43,6 +43,7 @@
     const statusText = document.getElementById("status");
     const html5QrCode = new Html5Qrcode("preview");
     let hasRedirected = false;
+    let hasRestarted = false;
 
     function startScanner() {
       html5QrCode.start(
@@ -53,7 +54,8 @@
       ).then(() => {
         statusText.innerText = "カメラ起動中。QRコードを枠内にかざしてください。";
       }).catch(err => {
-        if (err.includes("ongoing")) {
+        if (err.includes("ongoing") && !hasRestarted) {
+          hasRestarted = true;
           html5QrCode.stop().then(() => {
             startScanner();
           });
