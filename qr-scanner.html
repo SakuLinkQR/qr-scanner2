@@ -15,10 +15,18 @@
       font-size: 2em;
     }
     #preview {
-      width: 300px;
-      height: 350px;
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 4 / 3;
+      height: auto;
       border: 1px solid #ccc;
       margin: 20px auto;
+      overflow: hidden; /* はみ出した映像を非表示 */
+    }
+    #preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* 映像をコンテナにフィット */
     }
     #status {
       font-size: 1em;
@@ -49,6 +57,8 @@
 
     function onScanSuccess(decodedText, decodedResult) {
       if (hasRedirected) return;
+      hasRedirected = true;
+
       let idCode = decodedText.trim();
 
       try {
@@ -59,32 +69,47 @@
 
         if (!idCode) {
           resultContainer.innerText = "QRコードにIDが含まれていません。";
+          hasRedirected = false; // エラー時はリトライ可能
           return;
         }
 
-        resultContainer.innerText = idCode;
-        hasRedirected = true;
-        window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+        resultContainer.innerText = idCode + " (リダイレクト中...)";
 
+        // スキャナーを停止してからリダイレクト
+        html5QrCode.stop().then(() => {
+          window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+        }).catch(err => {
+          console.error("スキャナー停止エラー:", err);
+          resultContainer.innerText = "スキャナーの停止に失敗しました。";
+          hasRedirected = false; // エラー時はリトライ可能
+        });
       } catch (e) {
         console.error("URL解析エラー:", e);
         resultContainer.innerText = "QRコードの解析に失敗しました。";
+        hasRedirected = false; // エラー時はリトライ可能
       }
     }
 
     function onScanFailure(error) {
-      // 読み取り失敗時は静かに無視
+      console.debug("スキャン失敗:", error); // デバッグ用
     }
 
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
+      {
+        fps: 10,
+        qrbox: 250,
+        aspectRatio: 4 / 3, // CSSのaspect-ratioと一致
+        width: 400, // カメラ解像度の幅
+        height: 300 // カメラ解像度の高さ
+      },
       onScanSuccess,
       onScanFailure
     ).then(() => {
-      statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。";
+      statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。</small>";
     }).catch(err => {
-      statusText.textContent = "Camera error: " + err;
+      console.error("カメラエラー:", err);
+      statusText.innerHTML = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
     });
   </script>
 </body>
