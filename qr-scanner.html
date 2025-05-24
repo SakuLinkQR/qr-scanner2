@@ -60,7 +60,7 @@
   <div id="preview"></div>
   <p id="status">
     カメラの起動を準備しています...<br>
-    <small style="color:gray">※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください。</small>
+    <small style="color:gray">※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください（カメラが停止します）。</small>
   </p>
   <div id="result">Scanned result: <span id="output"></span></div>
   <button id="retry">カメラを再起動</button>
@@ -73,7 +73,7 @@
     const html5QrCode = new Html5Qrcode("preview");
 
     function startScanner() {
-      console.log("カメラ起動を試みます");
+      console.log("startScanner: カメラ起動を試みます");
       html5QrCode.stop().catch(err => {
         console.warn("事前停止エラー（無視可能）:", err);
       }).finally(() => {
@@ -89,7 +89,178 @@
           (decodedText, decodedResult) => {
             console.log("QRコード検出成功:", decodedText);
             resultContainer.innerText = "スキャン成功: " + decodedText;
-            alert("スキャン成功: " + decodedText); // デバッグ用
+            let idCode = decodedText.trim();
+
+            try {
+              if (decodedText.startsWith("http")) {
+                const url = new URL(decodedText);
+                idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
+              }
+
+              if (!idCode) {
+                resultContainer.innerText = "QRコードにIDが含まれていません。";
+                html5QrCode.stop().then(() => {
+                  statusText.innerHTML = "カメラを停止しました。もう一度スキャンするには「カメラを再起動」を押してください。<br><small style='color:gray'>※Safariのカメラアイコンをタップしないでください。</small>";
+                });
+                return;
+              }
+
+              resultContainer.innerText = idCode + " (リダイレクト中...)";
+              html5QrCode.stop().then(() => {
+                console.log("カメラ停止成功");
+                window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+              }).catch(err => {
+                console.error("カメラ停止エラー:", err);
+                resultContainer.innerText = "スキャナーの停止に失敗しました。";
+                statusText.innerHTML = "カメラを停止しました。もう一度スキャンするには「カメラを再起動」を押してください。<br><small style='color:gray'>※Safariのカメラアイコンをタップしないでください。</small>";
+              });
+            } catch (e) {
+              console.error("URL解析エラー:", e);
+              resultContainer.innerText = "QRコードの解析に失敗しました。";
+              html5QrCode.stop().then(() => {
+                statusText.innerHTML = "カメラを停止しました。もう一度スキャンするには「カメラを再起動」を押してください。<br><small style='color:gray'>※Safariのカメラアイコンをタップしないでください。</small>";
+              });
+            }
+          },
+          (error) => {
+            console.log("スキャン失敗詳細:", error);
+्ण
+
+System: カメラを停止した状態から再起動させるために、以下の手順を試してください：
+
+1. **Safariのカメラ許可を再確認**：
+   - iPhoneの「設定」→「Safari」→「カメラ」を確認し、「許可」または「確認」に設定してください。
+   - 「確認」に設定されている場合、スキャナ画面を開くと許可ポップアップが表示されるので、「許可」を選択します。
+   - これにより、Safariがカメラへのアクセスを再度許可する可能性があります。
+
+2. **ページをリロード**：
+   - SafariのURLバーのリロードボタン（円形の矢印）をタップするか、画面を下に引っ張ってリフレッシュしてください。
+   - これにより、`startScanner()`関数が再実行され、カメラが再起動する可能性があります。
+
+3. **「カメラを再起動」ボタンをクリック**：
+   - スキャナ画面で「カメラを再起動」ボタンをクリックしてください。
+   - これにより、`startScanner()`関数が呼び出され、カメラが再起動します。
+
+4. **Safariのキャッシュをクリア**：
+   - 「設定」→「Safari」→「履歴とWebサイトデータを消去」を実行してください。
+   - これにより、ブラウザのキャッシュがクリアされ、スクリプトが正しく再実行される可能性があります。
+
+5. **別のQRコードを試す**：
+   - 別のQRコード（例: `https://google.com` や `https://sakulinkqr.github.io/test?id_code=test123`）をスキャンしてみてください。
+   - 現在のQRコードに問題がある可能性があります。
+
+6. **ライブラリのバージョンを変更**：
+   - 以下のコード行を置き換えて、最新バージョンのライブラリを試してください：
+     ```html
+     <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
+     ```
+     を
+     ```html
+     <script src="https://unpkg.com/html5-qrcode"></script>
+     ```
+     に変更してください。
+
+7. **他のデバイス/ブラウザでテスト**：
+   - 知人のAndroidスマホ（Chromeなど）でスキャナ画面を開き、カメラが起動するか、QRコードに反応するかを確認してください。
+   - これにより、iPhone固有の問題かどうかを判断できます。
+
+---
+
+### **修正コード（カメラ起動とスキャン強化）**
+以下のコードは、カメラの再起動を確実にし、QRコードの検出精度を向上させ、詳細なデバッグログを追加したものです。
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SakuLink QR Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #ff4081;
+      font-size: 2em;
+    }
+    #preview {
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 4 / 3;
+      height: auto;
+      border: 1px solid #ccc;
+      margin: 20px auto;
+      overflow: hidden;
+    }
+    #preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #status {
+      font-size: 1em;
+      color: gray;
+      margin-top: 10px;
+    }
+    #result {
+      font-size: 1.2em;
+      margin-top: 20px;
+    }
+    #retry {
+      margin-top: 10px;
+      padding: 15px 30px;
+      font-size: 1.2em;
+      background-color: #ff4081;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #retry:hover {
+      background-color: #e91e63;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
+  <div id="preview"></div>
+  <p id="status">
+    カメラの起動を準備しています...<br>
+    <small style="color:gray">※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください（カメラが停止します）。</small>
+  </p>
+  <div id="result">Scanned result: <span id="output"></span></div>
+  <button id="retry">カメラを再起動</button>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
+  <script>
+    const resultContainer = document.getElementById("output");
+    const statusText = document.getElementById("status");
+    const retryButton = document.getElementById("retry");
+    const html5QrCode = new Html5Qrcode("preview");
+
+    function startScanner() {
+      console.log("startScanner: カメラ起動を試みます");
+      html5QrCode.stop().catch(err => {
+        console.warn("事前停止エラー（無視可能）:", err);
+      }).finally(() => {
+        html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 20,
+            qrbox: 100,
+            aspectRatio: 4 / 3,
+            width: 320,
+            height: 240
+          },
+          (decodedText, decodedResult) => {
+            console.log("QRコード検出成功:", decodedText);
+            resultContainer.innerText = "スキャン成功: " + decodedText;
             let idCode = decodedText.trim();
 
             try {
