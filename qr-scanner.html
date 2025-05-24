@@ -116,7 +116,7 @@
 
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
+      { fps: 10, qrbox: 250, aspectRatio: 4 / 3 },
       onScanSuccess,
       onScanFailure
     ).then(() => {
