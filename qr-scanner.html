@@ -16,7 +16,7 @@
     }
     #preview {
       width: 100%;
-      max-width: 360px;
+      max-width: 320px;
       height: auto;
       border: 1px solid #ccc;
       margin: 20px auto;
@@ -73,15 +73,14 @@
     }
 
     function onScanFailure(error) {
-      // 読み取り失敗時は何もしない
+      // 読み取り失敗時は無視
     }
 
     html5QrCode.start(
       { facingMode: "environment" },
       {
         fps: 10,
-        qrbox: 240,
-        aspectRatio: 4 / 3
+        qrbox: 200  // スキャン範囲だけ明示
       },
       onScanSuccess,
       onScanFailure
