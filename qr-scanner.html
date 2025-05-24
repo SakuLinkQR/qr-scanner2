@@ -2,19 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>QR Scanner Test</title>
+  <title>SakuLink QR Code Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
-      margin: 0;
       padding: 0;
+      margin: 0;
+    }
+    .top-bar {
+      background-color: #ff4081;
+      color: white;
+      padding: 10px 0;
+      font-size: 1.5em;
+      font-weight: bold;
+      position: relative;
+      z-index: 100;
+    }
+    .hamburger {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 1.5em;
+      cursor: pointer;
+    }
+    h1 {
+      margin-top: 15px;
+      font-size: 1.4em;
+      color: #ff4081;
     }
     #preview {
       width: 100%;
-      max-width: 360px;
-      margin: 20px auto;
+      max-width: 320px;
+      height: 240px;
+      border: 1px solid #ccc;
+      margin: 10px auto;
+      background: black;
+    }
+    #preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #status {
+      font-size: 1em;
+      color: gray;
+      margin-top: 10px;
     }
     #result {
       font-size: 1.2em;
@@ -23,34 +57,77 @@
   </style>
 </head>
 <body>
-  <h1>QR Scanner Test</h1>
+  <div class="top-bar">
+    🌸 SakuLink 🌸
+    <div class="hamburger">☰</div>
+  </div>
+  <h1>QR Code Scanner</h1>
+
   <div id="preview"></div>
-  <div id="result">Result: <span id="output"></span></div>
+
+  <p id="status">
+    カメラの起動を準備しています...<br>
+    <small style="color:gray">※最初の読み取りには数秒かかることがあります。</small>
+  </p>
+  <div id="result">Scanned result: <span id="output"></span></div>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
+    const resultContainer = document.getElementById("output");
+    const statusText = document.getElementById("status");
     const html5QrCode = new Html5Qrcode("preview");
-    const output = document.getElementById("output");
     let hasRedirected = false;
 
     function onScanSuccess(decodedText) {
       if (hasRedirected) return;
       hasRedirected = true;
-      output.innerText = decodedText;
-      window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(decodedText)}`;
+
+      let idCode = decodedText.trim();
+
+      try {
+        // URLとして読み取られた場合、id_codeを抽出
+        if (idCode.startsWith("http")) {
+          const url = new URL(idCode);
+          idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
+        }
+
+        if (!idCode) {
+          resultContainer.innerText = "QRコードにIDが含まれていません。";
+          hasRedirected = false;
+          return;
+        }
+
+        resultContainer.innerText = idCode + " (Redirecting...)";
+
+        html5QrCode.stop().then(() => {
+          // ここで正しい形式でindex.htmlへ遷移
+          window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+        }).catch(err => {
+          console.error("Failed to stop scanner:", err);
+          resultContainer.innerText = "スキャナーの停止に失敗しました。";
+          hasRedirected = false;
+        });
+      } catch (e) {
+        console.error("URL parse error:", e);
+        resultContainer.innerText = "QRコードの解析に失敗しました。";
+        hasRedirected = false;
+      }
     }
 
     function onScanFailure(error) {
-      console.debug("No QR detected", error);
+      console.debug("Scan failure:", error);
     }
 
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },  // ←内部で枠が表示される設定
+      { fps: 10, qrbox: 250, aspectRatio: 4 / 3 },
       onScanSuccess,
       onScanFailure
-    ).catch(err => {
-      document.getElementById("result").innerText = "Error: " + err;
+    ).then(() => {
+      statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。</small>";
+    }).catch(err => {
+      console.error("Camera error:", err);
+      statusText.innerHTML = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
     });
   </script>
 </body>
