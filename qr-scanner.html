@@ -27,12 +27,18 @@
       font-size: 1.5em;
       cursor: pointer;
     }
+    .subtitle {
+      font-size: 1.2em;
+      margin-top: 15px;
+      color: #333;
+    }
     #preview {
       width: 100%;
       max-width: 320px;
-      height: auto;
+      height: 240px; /* カメラ高さを明示指定 */
       border: 1px solid #ccc;
       margin: 20px auto;
+      background: black;
     }
     #status {
       font-size: 1em;
@@ -43,33 +49,33 @@
       font-size: 1.2em;
       margin-top: 20px;
     }
-    .subtitle {
-      font-size: 1.2em;
-      margin-top: 15px;
-      color: #333;
-    }
   </style>
 </head>
 <body>
+  <!-- 上段バー -->
   <div class="navbar">
     <h1>🌸 SakuLink 🌸</h1>
     <div class="menu-icon">☰</div>
   </div>
 
+  <!-- タイトル（SakuLinkは上段に表示するため省略） -->
   <p class="subtitle">QR Code Scanner</p>
 
+  <!-- カメラ表示エリア -->
   <div id="preview"></div>
+
   <p id="status">
     カメラの起動を準備しています...<br>
     <small style="color:gray">※最初の読み取りには数秒かかることがあります。</small>
   </p>
+
   <div id="result">Scanned result: <span id="output"></span></div>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
     const resultContainer = document.getElementById("output");
     const statusText = document.getElementById("status");
-    const html5QrCode = new Html5QrCode("preview");
+    const html5QrCode = new Html5Qrcode("preview");
     let hasRedirected = false;
 
     function onScanSuccess(decodedText, decodedResult) {
