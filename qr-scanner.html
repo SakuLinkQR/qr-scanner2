@@ -14,20 +14,12 @@
       color: #ff4081;
       font-size: 2em;
     }
-    /* ↓ 画面サイズ調整だけ反映（ここが変更点） */
     #preview {
       width: 100%;
       max-width: 360px;
-      aspect-ratio: 4 / 3;
       height: auto;
       border: 1px solid #ccc;
       margin: 20px auto;
-      overflow: hidden;
-    }
-    #preview video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
     }
     #status {
       font-size: 1em;
@@ -41,7 +33,7 @@
   </style>
 </head>
 <body>
-  <h1>🌸 SakuLink 🌸<br>QR Code Scanner</h1>
+  <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
   <div id="preview"></div>
   <p id="status">
     カメラの起動を準備しています...<br>
@@ -81,12 +73,16 @@
     }
 
     function onScanFailure(error) {
-      // 読み取り失敗時は静かに無視
+      // 読み取り失敗時は何もしない
     }
 
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
+      {
+        fps: 10,
+        qrbox: 240,
+        aspectRatio: 4 / 3
+      },
       onScanSuccess,
       onScanFailure
     ).then(() => {
