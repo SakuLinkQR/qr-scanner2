@@ -4,18 +4,11 @@
   <meta charset="UTF-8" />
   <title>SakuLink QR Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
       padding: 20px;
-    }
-    h1 {
-      color: #ff4081;
-      font-size: 2em;
     }
     #preview {
       width: 100%;
@@ -36,15 +29,10 @@
       color: gray;
       margin-top: 10px;
     }
-    #result {
-      font-size: 1.2em;
-      margin-top: 20px;
-    }
     #retry {
-      display: none;
       margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 1em;
+      padding: 15px 30px;
+      font-size: 1.2em;
       background-color: #ff4081;
       color: white;
       border: none;
@@ -57,87 +45,54 @@
   </style>
 </head>
 <body>
-  <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
+  <h1>🌸 SakuLink QR Scanner 🌸</h1>
   <div id="preview"></div>
   <p id="status">
     カメラの起動を準備しています...<br>
-    <small style="color:gray">※最初の読み取りには数秒かかることがあります。</small>
+    <small style="color:gray">※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください。</small>
   </p>
-  <div id="result">Scanned result: <span id="output"></span></div>
-  <button id="retry">再スキャン</button>
+  <button id="retry">カメラを再起動</button>
 
   <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
   <script>
-    const resultContainer = document.getElementById("output");
     const statusText = document.getElementById("status");
     const retryButton = document.getElementById("retry");
     const html5QrCode = new Html5Qrcode("preview");
 
     function startScanner() {
-      console.log("startScanner: カメラ起動を試みます");
+      console.log("カメラ起動を試みます");
       html5QrCode.start(
         { facingMode: "environment" },
         {
-          fps: 10,
-          qrbox: 250,
+          fps: 15, // スキャン頻度を上げる
+          qrbox: 150, // 読み取り枠を小さく
           aspectRatio: 4 / 3,
           width: 400,
           height: 300
         },
-        (decodedText, decodedResult) => {
+        (decodedText) => {
           console.log("QRコード検出:", decodedText);
-          let idCode = decodedText.trim();
-
-          try {
-            if (decodedText.startsWith("http")) {
-              const url = new URL(decodedText);
-              idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
-            }
-
-            if (!idCode) {
-              resultContainer.innerText = "QRコードにIDが含まれていません。";
-              retryButton.style.display = "block";
-              return;
-            }
-
-            resultContainer.innerText = idCode + " (リダイレクト中...)";
-            html5QrCode.stop().then(() => {
-              console.log("カメラ停止成功");
-              window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
-            }).catch(err => {
-              console.error("カメラ停止エラー:", err);
-              resultContainer.innerText = "スキャナーの停止に失敗しました。";
-              retryButton.style.display = "block";
-            });
-          } catch (e) {
-            console.error("URL解析エラー:", e);
-            resultContainer.innerText = "QRコードの解析に失敗しました。";
-            retryButton.style.display = "block";
-            html5QrCode.stop().catch(err => console.error("カメラ停止エラー:", err));
-          }
+          alert("スキャン成功: " + decodedText); // デバッグ用
         },
         (error) => {
-          console.debug("スキャン失敗:", error);
+          console.log("スキャン失敗詳細:", error); // 詳細ログ
         }
       ).then(() => {
         console.log("カメラ起動成功");
-        statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。</small>";
-        retryButton.style.display = "none";
+        statusText.textContent = "カメラ起動中。QRコードを枠内にかざしてください。";
       }).catch(err => {
         console.error("カメラ起動エラー:", err);
-        statusText.innerHTML = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。<br><small style='color:gray'>※カメラ許可後、再スキャンボタンを押してください。</small>";
-        retryButton.style.display = "block";
+        statusText.textContent = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
       });
     }
 
     retryButton.addEventListener("click", () => {
-      console.log("再スキャン開始");
-      resultContainer.innerText = "";
-      statusText.innerHTML = "カメラの起動を準備しています...<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。</small>";
+      console.log("カメラ再起動開始");
+      statusText.textContent = "カメラの起動を準備しています...";
       startScanner();
     });
 
-    // ページ読み込み時にカメラ起動
     startScanner();
   </script>
 </body>
+</html>
