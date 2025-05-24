@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>SakuLink QR Scanner</title>
+  <title>SakuLink QR Code Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
@@ -11,34 +11,40 @@
       padding: 0;
       margin: 0;
     }
-    .navbar {
+    .top-bar {
       background-color: #ff4081;
       color: white;
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .navbar h1 {
+      padding: 10px 0;
       font-size: 1.5em;
-      margin: 0;
+      font-weight: bold;
     }
-    .menu-icon {
+    .hamburger {
+      position: absolute;
+      top: 10px;
+      right: 15px;
       font-size: 1.5em;
       cursor: pointer;
     }
-    .subtitle {
-      font-size: 1.2em;
+    h1 {
       margin-top: 15px;
-      color: #333;
+      font-size: 1.4em;
+      color: #ff4081;
     }
     #preview {
       width: 100%;
       max-width: 320px;
-      height: 240px; /* カメラ高さを明示指定 */
+      height: 240px;
       border: 1px solid #ccc;
-      margin: 20px auto;
+      margin: 10px auto;
+      position: relative;
       background: black;
+    }
+    #preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: relative;
+      z-index: 1;
     }
     #status {
       font-size: 1em;
@@ -52,23 +58,16 @@
   </style>
 </head>
 <body>
-  <!-- 上段バー -->
-  <div class="navbar">
-    <h1>🌸 SakuLink 🌸</h1>
-    <div class="menu-icon">☰</div>
+  <div class="top-bar">
+    🌸 SakuLink 🌸
+    <div class="hamburger">☰</div>
   </div>
-
-  <!-- タイトル（SakuLinkは上段に表示するため省略） -->
-  <p class="subtitle">QR Code Scanner</p>
-
-  <!-- カメラ表示エリア -->
+  <h1>QR Code Scanner</h1>
   <div id="preview"></div>
-
   <p id="status">
     カメラの起動を準備しています...<br>
     <small style="color:gray">※最初の読み取りには数秒かかることがあります。</small>
   </p>
-
   <div id="result">Scanned result: <span id="output"></span></div>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -80,6 +79,7 @@
 
     function onScanSuccess(decodedText, decodedResult) {
       if (hasRedirected) return;
+      hasRedirected = true;
       let idCode = decodedText.trim();
 
       try {
@@ -90,34 +90,40 @@
 
         if (!idCode) {
           resultContainer.innerText = "QRコードにIDが含まれていません。";
+          hasRedirected = false;
           return;
         }
 
-        resultContainer.innerText = idCode;
-        hasRedirected = true;
-        window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+        resultContainer.innerText = idCode + " (Redirecting...)";
+
+        html5QrCode.stop().then(() => {
+          window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+        }).catch(err => {
+          console.error("Failed to stop scanner:", err);
+          resultContainer.innerText = "スキャナーの停止に失敗しました。";
+          hasRedirected = false;
+        });
       } catch (e) {
-        console.error("URL解析エラー:", e);
+        console.error("URL parse error:", e);
         resultContainer.innerText = "QRコードの解析に失敗しました。";
+        hasRedirected = false;
       }
     }
 
     function onScanFailure(error) {
-      // 読み取り失敗時は無視
+      console.debug("Scan failure:", error);
     }
 
     html5QrCode.start(
       { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: 200
-      },
+      { fps: 10, qrbox: 250 },
       onScanSuccess,
       onScanFailure
     ).then(() => {
       statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。</small>";
     }).catch(err => {
-      statusText.textContent = "Camera error: " + err;
+      console.error("Camera error:", err);
+      statusText.innerHTML = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
     });
   </script>
 </body>
