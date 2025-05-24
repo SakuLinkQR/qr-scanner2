@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <title>SakuLink QR Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <style>
     body {
       font-family: sans-serif;
@@ -63,88 +66,70 @@
   <div id="result">Scanned result: <span id="output"></span></div>
   <button id="retry">再スキャン</button>
 
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
   <script>
     const resultContainer = document.getElementById("output");
     const statusText = document.getElementById("status");
     const retryButton = document.getElementById("retry");
     const html5QrCode = new Html5Qrcode("preview");
-    let hasRedirected = false;
 
     function startScanner() {
-      // カメラが既に起動している場合は停止してから再起動
-      html5QrCode.stop().catch(() => {
-        // 停止エラーは無視（初回起動時は停止不要）
-      }).finally(() => {
-        html5QrCode.start(
-          { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: 250,
-            aspectRatio: 4 / 3,
-            width: 400,
-            height: 300
-          },
-          onScanSuccess,
-          onScanFailure
-        ).then(() => {
-          statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。</small>";
-          retryButton.style.display = "none";
-          hasRedirected = false; // フラグをリセット
-        }).catch(err => {
-          console.error("カメラエラー:", err);
-          statusText.innerHTML = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。<br><small style='color:gray'>※カメラ許可後、再スキャンボタンを押してください。</small>";
-          retryButton.style.display = "block";
-        });
+      console.log("startScanner: カメラ起動を試みます");
+      html5QrCode.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: 250,
+          aspectRatio: 4 / 3,
+          width: 400,
+          height: 300
+        },
+        (decodedText, decodedResult) => {
+          console.log("QRコード検出:", decodedText);
+          let idCode = decodedText.trim();
+
+          try {
+            if (decodedText.startsWith("http")) {
+              const url = new URL(decodedText);
+              idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
+            }
+
+            if (!idCode) {
+              resultContainer.innerText = "QRコードにIDが含まれていません。";
+              retryButton.style.display = "block";
+              return;
+            }
+
+            resultContainer.innerText = idCode + " (リダイレクト中...)";
+            html5QrCode.stop().then(() => {
+              console.log("カメラ停止成功");
+              window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+            }).catch(err => {
+              console.error("カメラ停止エラー:", err);
+              resultContainer.innerText = "スキャナーの停止に失敗しました。";
+              retryButton.style.display = "block";
+            });
+          } catch (e) {
+            console.error("URL解析エラー:", e);
+            resultContainer.innerText = "QRコードの解析に失敗しました。";
+            retryButton.style.display = "block";
+            html5QrCode.stop().catch(err => console.error("カメラ停止エラー:", err));
+          }
+        },
+        (error) => {
+          console.debug("スキャン失敗:", error);
+        }
+      ).then(() => {
+        console.log("カメラ起動成功");
+        statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。</small>";
+        retryButton.style.display = "none";
+      }).catch(err => {
+        console.error("カメラ起動エラー:", err);
+        statusText.innerHTML = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。<br><small style='color:gray'>※カメラ許可後、再スキャンボタンを押してください。</small>";
+        retryButton.style.display = "block";
       });
     }
 
-    function onScanSuccess(decodedText, decodedResult) {
-      if (hasRedirected) return;
-      hasRedirected = true;
-
-      let idCode = decodedText.trim();
-
-      try {
-        if (decodedText.startsWith("http")) {
-          const url = new URL(decodedText);
-          idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
-        }
-
-        if (!idCode) {
-          resultContainer.innerText = "QRコードにIDが含まれていません。";
-          hasRedirected = false;
-          html5QrCode.stop().then(() => {
-            retryButton.style.display = "block";
-          });
-          return;
-        }
-
-        resultContainer.innerText = idCode + " (リダイレクト中...)";
-
-        html5QrCode.stop().then(() => {
-          window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
-        }).catch(err => {
-          console.error("スキャナー停止エラー:", err);
-          resultContainer.innerText = "スキャナーの停止に失敗しました。";
-          retryButton.style.display = "block";
-          hasRedirected = false;
-        });
-      } catch (e) {
-        console.error("URL解析エラー:", e);
-        resultContainer.innerText = "QRコードの解析に失敗しました。";
-        html5QrCode.stop().then(() => {
-          retryButton.style.display = "block";
-        });
-        hasRedirected = false;
-      }
-    }
-
-    function onScanFailure(error) {
-      console.debug("スキャン失敗:", error);
-    }
-
-    // 再スキャンボタンのクリックイベント
     retryButton.addEventListener("click", () => {
       console.log("再スキャン開始");
       resultContainer.innerText = "";
@@ -152,22 +137,7 @@
       startScanner();
     });
 
-    // ページ読み込み時またはキャッシュ復元時にカメラを起動
-    window.addEventListener("pageshow", (event) => {
-      if (event.persisted) {
-        // キャッシュから復元された場合
-        console.log("ページがキャッシュから復元されました。カメラを再起動します。");
-        startScanner();
-      } else {
-        // 通常のページ読み込み
-        startScanner();
-      }
-    });
-
-    // クエリパラメータでrescanが指定された場合もカメラ起動
-    if (new URLSearchParams(window.location.search).get("rescan") === "true") {
-      startScanner();
-    }
+    // ページ読み込み時にカメラ起動
+    startScanner();
   </script>
 </body>
-</html>
