@@ -46,7 +46,11 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    #retry:hover {
+    #retry:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    #retry:hover:not(:disabled) {
       background-color: #e91e63;
     }
   </style>
@@ -60,7 +64,7 @@
   </p>
   <button id="retry">カメラを再起動</button>
 
-  <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
     const statusText = document.getElementById("status");
     const retryButton = document.getElementById("retry");
@@ -68,6 +72,7 @@
 
     function startScanner() {
       console.log("startScanner: カメラ起動を試みます");
+      retryButton.disabled = true; // ボタン無効化
       html5QrCode.clear();
       html5QrCode.stop().catch(err => {
         console.warn("事前停止エラー（無視可能）:", err);
@@ -92,17 +97,22 @@
         ).then(() => {
           console.log("カメラ起動成功");
           statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください。</small>";
+          retryButton.disabled = false; // ボタン有効化
         }).catch(err => {
           console.error("カメラ起動エラー:", err);
           statusText.innerHTML = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認し、「カメラを再起動」を押してください。<br><small style='color:gray'>※Safariのカメラアイコンをタップしないでください。</small>";
+          retryButton.disabled = false; // ボタン有効化
+          alert("カメラ起動エラー: " + err.message); // デバッグ用
         });
       });
     }
 
     retryButton.addEventListener("click", () => {
-      console.log("カメラ再起動開始");
-      statusText.innerHTML = "カメラの起動を準備しています...<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください。</small>";
-      startScanner();
+      if (!retryButton.disabled) {
+        console.log("カメラ再起動開始");
+        statusText.innerHTML = "カメラの起動を準備しています...<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください。</small>";
+        startScanner();
+      }
     });
 
     startScanner();
