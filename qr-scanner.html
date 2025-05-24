@@ -18,7 +18,6 @@
       font-size: 1.5em;
       font-weight: bold;
       position: relative;
-      z-index: 100;
     }
     .hamburger {
       position: absolute;
@@ -53,6 +52,25 @@
       font-size: 1.2em;
       margin-top: 20px;
     }
+    .button-container {
+      margin-top: 30px;
+    }
+    .btn {
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .btn-home {
+      background-color: #4FC3F7;
+      color: white;
+    }
+    .btn-rescan {
+      background-color: #FFEB3B;
+      color: black;
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
@@ -66,10 +84,15 @@
   <div id="preview"></div>
 
   <p id="status">
-    カメラの起動を準備しています...<br>
-    <small style="color:gray">※最初の読み取りには数秒かかることがあります。</small>
+    Preparing camera...<br>
+    <small style="color:gray">*It may take a few seconds to start scanning.</small>
   </p>
   <div id="result">Scanned result: <span id="output"></span></div>
+
+  <div class="button-container">
+    <button onclick="goHome()" class="btn btn-home">Go Home</button>
+    <button onclick="rescan()" class="btn btn-rescan">Rescan</button>
+  </div>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
@@ -89,7 +112,7 @@
         }
 
         if (!idCode) {
-          resultContainer.innerText = "QRコードにIDが含まれていません。";
+          resultContainer.innerText = "No valid ID found in QR code.";
           return;
         }
 
@@ -98,13 +121,33 @@
         window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
 
       } catch (e) {
-        console.error("URL解析エラー:", e);
-        resultContainer.innerText = "QRコードの解析に失敗しました。";
+        console.error("URL parsing error:", e);
+        resultContainer.innerText = "Failed to parse QR code.";
       }
     }
 
     function onScanFailure(error) {
-      // 読み取り失敗時は静かに無視
+      // Ignore scan failures silently
+    }
+
+    function goHome() {
+      window.location.href = "https://sakulinkqr.github.io/home.html";
+    }
+
+    function rescan() {
+      hasRedirected = false;
+      resultContainer.innerText = "";
+      html5QrCode.stop().then(() => {
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          onScanSuccess,
+          onScanFailure
+        );
+        statusText.innerHTML = "Restarting camera. Please hold QR code steady.";
+      }).catch(err => {
+        statusText.textContent = "Camera restart error: " + err;
+      });
     }
 
     html5QrCode.start(
@@ -113,7 +156,7 @@
       onScanSuccess,
       onScanFailure
     ).then(() => {
-      statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。";
+      statusText.innerHTML = "Camera active. Please hold the QR code within the frame.";
     }).catch(err => {
       statusText.textContent = "Camera error: " + err;
     });
