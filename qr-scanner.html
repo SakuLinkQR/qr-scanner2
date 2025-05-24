@@ -2,69 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>SakuLink QR Code Scanner</title>
+  <title>QR Scanner Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
-      padding: 0;
       margin: 0;
-    }
-    .top-bar {
-      background-color: #ff4081;
-      color: white;
-      padding: 10px 0;
-      font-size: 1.5em;
-      font-weight: bold;
-      position: relative;
-      z-index: 100;
-    }
-    .hamburger {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 1.5em;
-      cursor: pointer;
-    }
-    h1 {
-      margin-top: 15px;
-      font-size: 1.4em;
-      color: #ff4081;
-    }
-    #scanner-container {
-      position: relative;
-      width: 100%;
-      max-width: 320px;
-      margin: 0 auto;
+      padding: 0;
     }
     #preview {
       width: 100%;
-      height: 240px;
-      border: 1px solid #ccc;
-      background: black;
-    }
-    #preview video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    #qr-frame {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 250px;
-      height: 250px;
-      transform: translate(-50%, -50%);
-      border: 3px solid #00bcd4;
-      z-index: 10;
-      pointer-events: none;
-      box-sizing: border-box;
-    }
-    #status {
-      font-size: 1em;
-      color: gray;
-      margin-top: 10px;
+      max-width: 360px;
+      margin: 20px auto;
     }
     #result {
       font-size: 1.2em;
@@ -73,77 +23,34 @@
   </style>
 </head>
 <body>
-  <div class="top-bar">
-    🌸 SakuLink 🌸
-    <div class="hamburger">☰</div>
-  </div>
-  <h1>QR Code Scanner</h1>
-
-  <div id="scanner-container">
-    <div id="preview"></div>
-    <div id="qr-frame"></div>
-  </div>
-
-  <p id="status">
-    カメラの起動を準備しています...<br>
-    <small style="color:gray">※最初の読み取りには数秒かかることがあります。</small>
-  </p>
-  <div id="result">Scanned result: <span id="output"></span></div>
+  <h1>QR Scanner Test</h1>
+  <div id="preview"></div>
+  <div id="result">Result: <span id="output"></span></div>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
-    const resultContainer = document.getElementById("output");
-    const statusText = document.getElementById("status");
     const html5QrCode = new Html5Qrcode("preview");
+    const output = document.getElementById("output");
     let hasRedirected = false;
 
     function onScanSuccess(decodedText) {
       if (hasRedirected) return;
       hasRedirected = true;
-
-      let idCode = decodedText.trim();
-      try {
-        if (decodedText.startsWith("http")) {
-          const url = new URL(decodedText);
-          idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
-        }
-
-        if (!idCode) {
-          resultContainer.innerText = "QRコードにIDが含まれていません。";
-          hasRedirected = false;
-          return;
-        }
-
-        resultContainer.innerText = idCode + " (Redirecting...)";
-
-        html5QrCode.stop().then(() => {
-          window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
-        }).catch(err => {
-          console.error("Failed to stop scanner:", err);
-          resultContainer.innerText = "スキャナーの停止に失敗しました。";
-          hasRedirected = false;
-        });
-      } catch (e) {
-        console.error("URL parse error:", e);
-        resultContainer.innerText = "QRコードの解析に失敗しました。";
-        hasRedirected = false;
-      }
+      output.innerText = decodedText;
+      window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(decodedText)}`;
     }
 
     function onScanFailure(error) {
-      console.debug("Scan failure:", error);
+      console.debug("No QR detected", error);
     }
 
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 250, aspectRatio: 4 / 3 },
+      { fps: 10, qrbox: 250 },  // ←内部で枠が表示される設定
       onScanSuccess,
       onScanFailure
-    ).then(() => {
-      statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。</small>";
-    }).catch(err => {
-      console.error("Camera error:", err);
-      statusText.innerHTML = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。";
+    ).catch(err => {
+      document.getElementById("result").innerText = "Error: " + err;
     });
   </script>
 </body>
