@@ -14,11 +14,20 @@
       color: #ff4081;
       font-size: 2em;
     }
+    /* ↓ 画面サイズ調整だけ反映（ここが変更点） */
     #preview {
-      width: 300px;
-      height: 350px;
+      width: 100%;
+      max-width: 360px;
+      aspect-ratio: 4 / 3;
+      height: auto;
       border: 1px solid #ccc;
       margin: 20px auto;
+      overflow: hidden;
+    }
+    #preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     #status {
       font-size: 1em;
@@ -32,7 +41,7 @@
   </style>
 </head>
 <body>
-  <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
+  <h1>🌸 SakuLink 🌸<br>QR Code Scanner</h1>
   <div id="preview"></div>
   <p id="status">
     カメラの起動を準備しています...<br>
@@ -65,7 +74,6 @@
         resultContainer.innerText = idCode;
         hasRedirected = true;
         window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
-
       } catch (e) {
         console.error("URL解析エラー:", e);
         resultContainer.innerText = "QRコードの解析に失敗しました。";
@@ -82,7 +90,7 @@
       onScanSuccess,
       onScanFailure
     ).then(() => {
-      statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。";
+      statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。</small>";
     }).catch(err => {
       statusText.textContent = "Camera error: " + err;
     });
