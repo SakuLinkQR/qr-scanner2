@@ -36,10 +36,6 @@
       color: gray;
       margin-top: 10px;
     }
-    #result {
-      font-size: 1.2em;
-      margin-top: 20px;
-    }
     #retry {
       margin-top: 10px;
       padding: 15px 30px;
@@ -56,24 +52,23 @@
   </style>
 </head>
 <body>
-  <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
+  <h1>🌸 SakuLink QR Scanner 🌸</h1>
   <div id="preview"></div>
   <p id="status">
     カメラの起動を準備しています...<br>
-    <small style="color:gray">※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください（カメラが停止します）。</small>
+    <small style="color:gray">※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください。</small>
   </p>
-  <div id="result">Scanned result: <span id="output"></span></div>
   <button id="retry">カメラを再起動</button>
 
   <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
   <script>
-    const resultContainer = document.getElementById("output");
     const statusText = document.getElementById("status");
     const retryButton = document.getElementById("retry");
     const html5QrCode = new Html5Qrcode("preview");
 
     function startScanner() {
       console.log("startScanner: カメラ起動を試みます");
+      html5QrCode.clear();
       html5QrCode.stop().catch(err => {
         console.warn("事前停止エラー（無視可能）:", err);
       }).finally(() => {
@@ -88,39 +83,8 @@
           },
           (decodedText, decodedResult) => {
             console.log("QRコード検出成功:", decodedText);
-            resultContainer.innerText = "スキャン成功: " + decodedText;
-            let idCode = decodedText.trim();
-
-            try {
-              if (decodedText.startsWith("http")) {
-                const url = new URL(decodedText);
-                idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
-              }
-
-              if (!idCode) {
-                resultContainer.innerText = "QRコードにIDが含まれていません。";
-                html5QrCode.stop().then(() => {
-                  statusText.innerHTML = "カメラを停止しました。もう一度スキャンするには「カメラを再起動」を押してください。<br><small style='color:gray'>※Safariのカメラアイコンをタップしないでください。</small>";
-                });
-                return;
-              }
-
-              resultContainer.innerText = idCode + " (リダイレクト中...)";
-              html5QrCode.stop().then(() => {
-                console.log("カメラ停止成功");
-                window.location.href = `https://sakulinkqr.github.io/dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
-              }).catch(err => {
-                console.error("カメラ停止エラー:", err);
-                resultContainer.innerText = "スキャナーの停止に失敗しました。";
-                statusText.innerHTML = "カメラを停止しました。もう一度スキャンするには「カメラを再起動」を押してください。<br><small style='color:gray'>※Safariのカメラアイコンをタップしないでください。</small>";
-              });
-            } catch (e) {
-              console.error("URL解析エラー:", e);
-              resultContainer.innerText = "QRコードの解析に失敗しました。";
-              html5QrCode.stop().then(() => {
-                statusText.innerHTML = "カメラを停止しました。もう一度スキャンするには「カメラを再起動」を押してください。<br><small style='color:gray'>※Safariのカメラアイコンをタップしないでください。</small>";
-              });
-            }
+            alert("スキャン成功: " + decodedText); // デバッグ用
+            statusText.innerText = "スキャン成功: " + decodedText;
           },
           (error) => {
             console.log("スキャン失敗詳細:", error);
@@ -130,14 +94,13 @@
           statusText.innerHTML = "カメラ起動中。QRコードを枠内にかざしてください。<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください。</small>";
         }).catch(err => {
           console.error("カメラ起動エラー:", err);
-          statusText.innerHTML = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認してください。<br><small style='color:gray'>※「カメラを再起動」を押してください。Safariのカメラアイコンをタップしないでください。</small>";
+          statusText.innerHTML = "カメラの起動に失敗しました。ブラウザの設定でカメラ許可を確認し、「カメラを再起動」を押してください。<br><small style='color:gray'>※Safariのカメラアイコンをタップしないでください。</small>";
         });
       });
     }
 
     retryButton.addEventListener("click", () => {
       console.log("カメラ再起動開始");
-      resultContainer.innerText = "";
       statusText.innerHTML = "カメラの起動を準備しています...<br><small style='color:gray'>※最初の読み取りには数秒かかることがあります。Safariのカメラアイコンをタップしないでください。</small>";
       startScanner();
     });
