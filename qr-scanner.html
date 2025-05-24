@@ -17,6 +17,8 @@
       padding: 10px 0;
       font-size: 1.5em;
       font-weight: bold;
+      position: relative;
+      z-index: 100;
     }
     .hamburger {
       position: absolute;
@@ -30,21 +32,22 @@
       font-size: 1.4em;
       color: #ff4081;
     }
-    #preview {
+    #scanner-container {
+      position: relative;
       width: 100%;
       max-width: 320px;
+      margin: 0 auto;
+    }
+    #preview {
+      width: 100%;
       height: 240px;
       border: 1px solid #ccc;
-      margin: 10px auto;
-      position: relative;
       background: black;
     }
     #preview video {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      position: relative;
-      z-index: 1;
     }
     #qr-frame {
       position: absolute;
@@ -54,9 +57,9 @@
       height: 250px;
       transform: translate(-50%, -50%);
       border: 3px solid #00bcd4;
-      z-index: 2;
-      box-sizing: border-box;
+      z-index: 10;
       pointer-events: none;
+      box-sizing: border-box;
     }
     #status {
       font-size: 1em;
@@ -75,9 +78,12 @@
     <div class="hamburger">☰</div>
   </div>
   <h1>QR Code Scanner</h1>
-  <div id="preview">
+
+  <div id="scanner-container">
+    <div id="preview"></div>
     <div id="qr-frame"></div>
   </div>
+
   <p id="status">
     カメラの起動を準備しています...<br>
     <small style="color:gray">※最初の読み取りには数秒かかることがあります。</small>
@@ -91,11 +97,11 @@
     const html5QrCode = new Html5Qrcode("preview");
     let hasRedirected = false;
 
-    function onScanSuccess(decodedText, decodedResult) {
+    function onScanSuccess(decodedText) {
       if (hasRedirected) return;
       hasRedirected = true;
-      let idCode = decodedText.trim();
 
+      let idCode = decodedText.trim();
       try {
         if (decodedText.startsWith("http")) {
           const url = new URL(decodedText);
