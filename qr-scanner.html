@@ -8,11 +8,24 @@
     body {
       font-family: sans-serif;
       text-align: center;
-      padding: 20px;
+      padding: 0;
+      margin: 0;
     }
-    h1 {
-      color: #ff4081;
-      font-size: 2em;
+    .navbar {
+      background-color: #ff4081;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .navbar h1 {
+      font-size: 1.5em;
+      margin: 0;
+    }
+    .menu-icon {
+      font-size: 1.5em;
+      cursor: pointer;
     }
     #preview {
       width: 100%;
@@ -30,10 +43,21 @@
       font-size: 1.2em;
       margin-top: 20px;
     }
+    .subtitle {
+      font-size: 1.2em;
+      margin-top: 15px;
+      color: #333;
+    }
   </style>
 </head>
 <body>
-  <h1>🌸 SakuLink<br>QR Code Scanner 🌸</h1>
+  <div class="navbar">
+    <h1>🌸 SakuLink 🌸</h1>
+    <div class="menu-icon">☰</div>
+  </div>
+
+  <p class="subtitle">QR Code Scanner</p>
+
   <div id="preview"></div>
   <p id="status">
     カメラの起動を準備しています...<br>
@@ -45,7 +69,7 @@
   <script>
     const resultContainer = document.getElementById("output");
     const statusText = document.getElementById("status");
-    const html5QrCode = new Html5Qrcode("preview");
+    const html5QrCode = new Html5QrCode("preview");
     let hasRedirected = false;
 
     function onScanSuccess(decodedText, decodedResult) {
@@ -80,7 +104,7 @@
       { facingMode: "environment" },
       {
         fps: 10,
-        qrbox: 200  // スキャン範囲だけ明示
+        qrbox: 200
       },
       onScanSuccess,
       onScanFailure
