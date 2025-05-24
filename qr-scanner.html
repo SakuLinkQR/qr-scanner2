@@ -46,6 +46,18 @@
       position: relative;
       z-index: 1;
     }
+    #qr-frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 250px;
+      height: 250px;
+      transform: translate(-50%, -50%);
+      border: 3px solid #00bcd4;
+      z-index: 2;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
     #status {
       font-size: 1em;
       color: gray;
@@ -63,7 +75,9 @@
     <div class="hamburger">☰</div>
   </div>
   <h1>QR Code Scanner</h1>
-  <div id="preview"></div>
+  <div id="preview">
+    <div id="qr-frame"></div>
+  </div>
   <p id="status">
     カメラの起動を準備しています...<br>
     <small style="color:gray">※最初の読み取りには数秒かかることがあります。</small>
