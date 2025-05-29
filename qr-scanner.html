@@ -67,7 +67,7 @@
       display: inline-block;
     }
     .btn-home {
-      background-color: #4fc3f7;
+      background-color: #ff4081;
     }
     .btn-scan {
       background-color: #fbc02d;
@@ -95,7 +95,7 @@
     if (!idCode) {
       container.innerHTML = "<p class='error'>No ID code provided.</p>";
     } else {
-      fetch(https://x8ki-letl-twmt.n7.xano.io/api:83htZU0e/get_dish_by_id_code_v2?id_code=${idCode})
+      fetch(`https://x8ki-letl-twmt.n7.xano.io/api:83htZU0e/get_dish_by_id_code_v2?id_code=${idCode}`)
         .then(res => res.json())
         .then(data => {
           const dish = Array.isArray(data) ? data[0] : data;
@@ -105,23 +105,25 @@
             return;
           }
 
-          const html = 
+          const html = `
             <h2>${dish.dish_name_en} ${dish.subtitle_en || ""}</h2>
             <p><strong>Japanese Name:</strong> ${dish.dish_name_ja || ""} ${dish.subtitle_ja || ""}</p>
             <p><strong>Reading:</strong> ${dish.reading_en || "N/A"}</p>
             <p><strong>Description:</strong><br>${dish.description_en || "No description available."}</p>
             <p><strong>Ingredients:</strong><br>${dish.ingredients_en || "N/A"}</p>
             <p><strong>Allergens:</strong><br>⚠️ ${dish.allergens_en || "None listed"}</p>
-            <p style="font-size: 0.9em; color: gray;"><em>Note: Allergen information is based on general preparation and may vary by restaurant. Please confirm with the restaurant directly.</em></p>
+            <p style="font-size: 0.9em; color: gray;">
+              <em>Note: Allergen information is based on general preparation and may vary by restaurant. Please confirm with the restaurant directly.</em>
+            </p>
 
             <div class="button-row">
-              <a class="btn btn-home" href="home.html">🏡 Home 🏡</a>
+              <a class="btn btn-home" href="../home.html">🏠 Home 🏠</a>
               <a class="btn btn-scan" href="../qr-scanner2/qr-scanner.html">🔄 Rescan</a>
             </div>
             <div style="margin-top: 20px;">
               <img src="../images/sample.jpg" alt="Sample Dish Image" style="width: 100%; max-width: 560px;">
             </div>
-          ;
+          `;
 
           container.innerHTML = html;
         })
