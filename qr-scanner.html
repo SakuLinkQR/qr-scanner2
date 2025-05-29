@@ -2,120 +2,134 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🌸 SakuLink QR Scanner</title>
+  <title>SakuLink - Dish Details</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'M PLUS Rounded 1c', sans-serif;
-      text-align: center;
-      background-color: #fff;
-      margin: 0;
       padding: 0;
+      margin: 0;
     }
-
     header {
       background-color: #ff4081;
       color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       padding: 12px 20px;
+    }
+    header h1 {
+      font-size: 1.4em;
+      margin: 0;
+    }
+    .menu-icon {
+      font-size: 1.5em;
+      cursor: pointer;
+    }
+    .content {
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    .section-title {
+      text-align: center;
       font-size: 1.4em;
       font-weight: bold;
-    }
-
-    h2 {
+      margin: 16px 0;
       color: #ff4081;
-      margin-top: 24px;
     }
-
-    #video {
-      width: 300px;
-      height: 300px;
+    .loading { color: gray; }
+    .error { color: red; }
+    h2 {
+      font-size: 1.4em;
       margin-top: 20px;
-      background-color: black;
     }
-
-    .message {
-      margin-top: 10px;
-      color: #666;
-    }
-
-    .result {
+    strong {
       font-weight: bold;
-      margin-top: 16px;
     }
-
     .button-row {
-      margin-top: 30px;
       display: flex;
       justify-content: center;
       gap: 16px;
-      flex-wrap: wrap;
+      margin: 24px 0 12px;
     }
-
     .btn {
       padding: 12px 20px;
       font-size: 1em;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
+      color: white;
       text-decoration: none;
-      display: inline-block;
-      font-weight: bold;
       min-width: 140px;
       text-align: center;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      display: inline-block;
     }
-
     .btn-home {
-      background-color: #ff4081 !important;
-      color: white;
-      box-shadow: 0 4px 10px rgba(255, 64, 129, 0.3);
+      background-color: #4fc3f7;
     }
-
     .btn-scan {
       background-color: #fbc02d;
       color: black;
-      box-shadow: 0 4px 10px rgba(251, 192, 45, 0.3);
     }
   </style>
 </head>
 <body>
-
-  <header>🌸 SakuLink 🌸</header>
-
-  <h2>QR Code Scanner</h2>
-  <video id="video" autoplay></video>
-  <canvas id="canvas" style="display:none;"></canvas>
-
-  <p class="message">Camera active. Please hold the QR code within the frame.</p>
-  <div class="result">Scanned result: <span id="result"></span></div>
-
-  <div class="button-row">
-    <a href="../home.html" class="btn btn-home">← 🏠 Back to Home</a>
-    <a href="qr-scanner.html" class="btn btn-scan">🔄 Rescan</a>
+  <header>
+    <h1>🌸 SakuLink 🌸</h1>
+    <div class="menu-icon">☰</div>
+  </header>
+  <div class="content">
+    <div class="section-title">Dish Details</div>
+    <div id="dish-container">
+      <p class="loading">Loading...</p>
+    </div>
   </div>
 
   <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const result = document.getElementById('result');
+    const params = new URLSearchParams(window.location.search);
+    const idCode = params.get("id_code");
+    const container = document.getElementById("dish-container");
 
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-      .then(stream => {
-        video.srcObject = stream;
-        video.play();
-      })
-      .catch(err => {
-        console.error(err);
-        result.textContent = 'Camera access error';
-      });
+    if (!idCode) {
+      container.innerHTML = "<p class='error'>No ID code provided.</p>";
+    } else {
+      fetch(https://x8ki-letl-twmt.n7.xano.io/api:83htZU0e/get_dish_by_id_code_v2?id_code=${idCode})
+        .then(res => res.json())
+        .then(data => {
+          const dish = Array.isArray(data) ? data[0] : data;
 
-    video.addEventListener('loadedmetadata', () => {
-      setInterval(() => {
-        result.textContent = 'Scanning...';
-      }, 1000);
-    });
+          if (!dish || !dish.dish_name_en) {
+            container.innerHTML = "<p class='error'>Dish not found.</p>";
+            return;
+          }
+
+          const html = 
+            <h2>${dish.dish_name_en} ${dish.subtitle_en || ""}</h2>
+            <p><strong>Japanese Name:</strong> ${dish.dish_name_ja || ""} ${dish.subtitle_ja || ""}</p>
+            <p><strong>Reading:</strong> ${dish.reading_en || "N/A"}</p>
+            <p><strong>Description:</strong><br>${dish.description_en || "No description available."}</p>
+            <p><strong>Ingredients:</strong><br>${dish.ingredients_en || "N/A"}</p>
+            <p><strong>Allergens:</strong><br>⚠️ ${dish.allergens_en || "None listed"}</p>
+            <p style="font-size: 0.9em; color: gray;"><em>Note: Allergen information is based on general preparation and may vary by restaurant. Please confirm with the restaurant directly.</em></p>
+
+            <div class="button-row">
+              <a class="btn btn-home" href="home.html">🏡 Home 🏡</a>
+              <a class="btn btn-scan" href="../qr-scanner2/qr-scanner.html">🔄 Rescan</a>
+            </div>
+            <div style="margin-top: 20px;">
+              <img src="../images/sample.jpg" alt="Sample Dish Image" style="width: 100%; max-width: 560px;">
+            </div>
+          ;
+
+          container.innerHTML = html;
+        })
+        .catch(error => {
+          console.error("Error fetching dish:", error);
+          container.innerHTML = "<p class='error'>Failed to load data.</p>";
+        });
+    }
   </script>
-
 </body>
 </html>
