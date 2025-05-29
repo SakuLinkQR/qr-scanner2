@@ -2,109 +2,88 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🌸 SakuLink QR Scanner</title>
+  <title>SakuLink QR Scanner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: sans-serif;
-      text-align: center;
       margin: 0;
-      background-color: #fff8fa;
+      padding: 0;
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f9f9f9;
     }
-
     header {
+      width: 100%;
       background-color: #ff4081;
       color: white;
-      padding: 14px;
+      padding: 12px 20px;
+      text-align: center;
       font-size: 1.4em;
-      font-weight: bold;
     }
-
-    h2 {
-      color: #ff4081;
+    video {
       margin-top: 20px;
+      width: 90%;
+      max-width: 480px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
     }
-
-    #video {
-      width: 300px;
-      height: 300px;
-      background: black;
+    #result {
       margin-top: 16px;
+      font-size: 1.2em;
+      color: #333;
     }
-
-    .message {
-      color: gray;
-      margin-top: 10px;
-    }
-
-    .result {
-      margin-top: 12px;
-      font-weight: bold;
-    }
-
     .button-row {
-      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      margin: 24px 0;
     }
-
-    .btn {
-      padding: 10px 20px;
-      font-size: 1em;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      font-weight: bold;
-      display: inline-block;
-      margin: 0 10px;
-    }
-
     .btn-home {
-      background-color: #ff4081;
+      background-color: #4fc3f7;
+      padding: 12px 20px;
       color: white;
-    }
-
-    .btn-rescan {
-      background-color: #fbc02d;
-      color: black;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 1em;
     }
   </style>
 </head>
 <body>
-
-  <header>🌸 SakuLink 🌸</header>
-
-  <h2>QR Code Scanner</h2>
+  <header>🌸 SakuLink QR Code Scanner</header>
 
   <video id="video" autoplay></video>
   <canvas id="canvas" style="display:none;"></canvas>
-
-  <p class="message">Camera active. Please hold the QR code within the frame.</p>
-  <div class="result">Scanned result: <span id="result">Waiting...</span></div>
+  <p>Scanned result: <span id="result">Waiting...</span></p>
 
   <div class="button-row">
-    <a href="../home.html" class="btn btn-home">🏠 HOME 🏠</a>
-    <a href="qr-scanner.html" class="btn btn-rescan">🔄 Rescan</a>
+    <a class="btn-home" href="../dish-pages/home.html">🏡 Home</a>
   </div>
 
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
   <script>
-    const video = document.getElementById("video");
-    const result = document.getElementById("result");
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const resultElement = document.getElementById('result');
 
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-      .then(stream => {
-        video.srcObject = stream;
-        video.play();
+    codeReader
+      .listVideoInputDevices()
+      .then(videoInputDevices => {
+        const selectedDeviceId = videoInputDevices[0].deviceId;
+
+        codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
+          if (result) {
+            resultElement.textContent = result.text;
+            // QRコードの内容がURLパラメータならリダイレクト
+            if (result.text.includes("id_code=")) {
+              window.location.href = `../dish-pages/index.html?${result.text.split("?")[1]}`;
+            }
+          }
+          if (err && !(err instanceof ZXing.NotFoundException)) {
+            console.error(err);
+          }
+        });
       })
-      .catch(err => {
-        console.error("Camera error:", err);
-        result.textContent = "Camera access denied.";
-      });
-
-    // 仮の表示例（実際のQR解析ライブラリは別途追加可能）
-    setInterval(() => {
-      result.textContent = "Scanning QR code..."; // 仮状態
-    }, 1000);
+      .catch(err => console.error(err));
   </script>
-
 </body>
 </html>
