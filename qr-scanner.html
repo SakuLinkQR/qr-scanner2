@@ -2,88 +2,134 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SakuLink QR Scanner</title>
+  <title>SakuLink - Dish Details</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0;
-      padding: 0;
       font-family: 'M PLUS Rounded 1c', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background-color: #f9f9f9;
+      padding: 0;
+      margin: 0;
     }
     header {
-      width: 100%;
       background-color: #ff4081;
       color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       padding: 12px 20px;
+    }
+    header h1 {
+      font-size: 1.4em;
+      margin: 0;
+    }
+    .menu-icon {
+      font-size: 1.5em;
+      cursor: pointer;
+    }
+    .content {
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    .section-title {
       text-align: center;
       font-size: 1.4em;
+      font-weight: bold;
+      margin: 16px 0;
+      color: #ff4081;
     }
-    video {
+    .loading { color: gray; }
+    .error { color: red; }
+    h2 {
+      font-size: 1.4em;
       margin-top: 20px;
-      width: 90%;
-      max-width: 480px;
-      border: 2px solid #ccc;
-      border-radius: 10px;
     }
-    #result {
-      margin-top: 16px;
-      font-size: 1.2em;
-      color: #333;
+    strong {
+      font-weight: bold;
     }
     .button-row {
       display: flex;
       justify-content: center;
-      margin: 24px 0;
+      gap: 16px;
+      margin: 24px 0 12px;
+    }
+    .btn {
+      padding: 12px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      text-decoration: none;
+      min-width: 140px;
+      text-align: center;
+      display: inline-block;
     }
     .btn-home {
       background-color: #4fc3f7;
-      padding: 12px 20px;
-      color: white;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 1em;
+    }
+    .btn-scan {
+      background-color: #fbc02d;
+      color: black;
     }
   </style>
 </head>
 <body>
-  <header>🌸 SakuLink QR Code Scanner</header>
-
-  <video id="video" autoplay></video>
-  <canvas id="canvas" style="display:none;"></canvas>
-  <p>Scanned result: <span id="result">Waiting...</span></p>
-
-  <div class="button-row">
-    <a class="btn-home" href="../dish-pages/home.html">🏡 Home</a>
+  <header>
+    <h1>🌸 SakuLink 🌸</h1>
+    <div class="menu-icon">☰</div>
+  </header>
+  <div class="content">
+    <div class="section-title">Dish Details</div>
+    <div id="dish-container">
+      <p class="loading">Loading...</p>
+    </div>
   </div>
 
-  <script src="https://unpkg.com/@zxing/library@latest"></script>
   <script>
-    const codeReader = new ZXing.BrowserMultiFormatReader();
-    const resultElement = document.getElementById('result');
+    const params = new URLSearchParams(window.location.search);
+    const idCode = params.get("id_code");
+    const container = document.getElementById("dish-container");
 
-    codeReader
-      .listVideoInputDevices()
-      .then(videoInputDevices => {
-        const selectedDeviceId = videoInputDevices[0].deviceId;
+    if (!idCode) {
+      container.innerHTML = "<p class='error'>No ID code provided.</p>";
+    } else {
+      fetch(https://x8ki-letl-twmt.n7.xano.io/api:83htZU0e/get_dish_by_id_code_v2?id_code=${idCode})
+        .then(res => res.json())
+        .then(data => {
+          const dish = Array.isArray(data) ? data[0] : data;
 
-        codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
-          if (result) {
-            resultElement.textContent = result.text;
-            // QRコードの内容がURLパラメータならリダイレクト
-            if (result.text.includes("id_code=")) {
-              window.location.href = `../dish-pages/index.html?${result.text.split("?")[1]}`;
-            }
+          if (!dish || !dish.dish_name_en) {
+            container.innerHTML = "<p class='error'>Dish not found.</p>";
+            return;
           }
-          if (err && !(err instanceof ZXing.NotFoundException)) {
-            console.error(err);
-          }
+
+          const html = 
+            <h2>${dish.dish_name_en} ${dish.subtitle_en || ""}</h2>
+            <p><strong>Japanese Name:</strong> ${dish.dish_name_ja || ""} ${dish.subtitle_ja || ""}</p>
+            <p><strong>Reading:</strong> ${dish.reading_en || "N/A"}</p>
+            <p><strong>Description:</strong><br>${dish.description_en || "No description available."}</p>
+            <p><strong>Ingredients:</strong><br>${dish.ingredients_en || "N/A"}</p>
+            <p><strong>Allergens:</strong><br>⚠️ ${dish.allergens_en || "None listed"}</p>
+            <p style="font-size: 0.9em; color: gray;"><em>Note: Allergen information is based on general preparation and may vary by restaurant. Please confirm with the restaurant directly.</em></p>
+
+            <div class="button-row">
+              <a class="btn btn-home" href="home.html">🏡 Home 🏡</a>
+              <a class="btn btn-scan" href="../qr-scanner2/qr-scanner.html">🔄 Rescan</a>
+            </div>
+            <div style="margin-top: 20px;">
+              <img src="../images/sample.jpg" alt="Sample Dish Image" style="width: 100%; max-width: 560px;">
+            </div>
+          ;
+
+          container.innerHTML = html;
+        })
+        .catch(error => {
+          console.error("Error fetching dish:", error);
+          container.innerHTML = "<p class='error'>Failed to load data.</p>";
         });
-      })
-      .catch(err => console.error(err));
+    }
   </script>
 </body>
 </html>
