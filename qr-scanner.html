@@ -29,10 +29,9 @@
 
     #video {
       width: 300px;
-      height: 200px;
+      height: 300px;
       margin-top: 20px;
-      border: 8px solid black;
-      border-radius: 8px;
+      background-color: black;
     }
 
     .message {
@@ -85,7 +84,7 @@
   <header>🌸 SakuLink 🌸</header>
 
   <h2>QR Code Scanner</h2>
-  <video id="video" playsinline></video>
+  <video id="video" autoplay></video>
   <canvas id="canvas" style="display:none;"></canvas>
 
   <p class="message">Camera active. Please hold the QR code within the frame.</p>
@@ -111,7 +110,6 @@
         result.textContent = 'Camera access error';
       });
 
-    // 仮のスキャン状態表示（ライブラリと連携する場合はここに追加）
     video.addEventListener('loadedmetadata', () => {
       setInterval(() => {
         result.textContent = 'Scanning...';
