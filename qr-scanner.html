@@ -10,7 +10,7 @@
       text-align: center;
       padding: 0;
       margin: 0;
-      background-color: #fff6f8;
+      background-color: #fff7fa;
     }
     .top-bar {
       background-color: #ff4081;
@@ -53,6 +53,7 @@
       font-size: 1.2em;
       margin-top: 20px;
     }
+
     .button-container {
       display: flex;
       justify-content: center;
@@ -60,20 +61,20 @@
       margin-top: 30px;
     }
     .btn {
-      padding: 12px 20px;
+      padding: 12px 24px;
       font-size: 1em;
+      font-weight: bold;
       border: none;
       border-radius: 10px;
-      font-weight: bold;
       text-decoration: none;
-      display: inline-block;
-      min-width: 140px;
       text-align: center;
+      min-width: 180px;
+      box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.1);
+      display: inline-block;
     }
     .btn-home {
       background-color: #ff4081;
       color: white;
-      box-shadow: 2px 4px 10px #fbb;
     }
     .btn-rescan {
       background-color: #FFEB3B;
@@ -98,7 +99,7 @@
   <div id="result">Scanned result: <span id="output"></span></div>
 
   <div class="button-container">
-    <button onclick="goHome()" class="btn btn-home">← 🏡 Back to Home</button>
+    <button onclick="goHome()" class="btn btn-home">🏠 Back to Home</button>
     <button onclick="rescan()" class="btn btn-rescan">🔄 Rescan</button>
   </div>
 
@@ -134,7 +135,7 @@
     }
 
     function onScanFailure(error) {
-      // Silent scan failure
+      // Ignore errors
     }
 
     function goHome() {
