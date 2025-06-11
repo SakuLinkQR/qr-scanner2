@@ -2,82 +2,134 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QR Code Scanner</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <title>SakuLink QR Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
-      margin: 0;
       font-family: sans-serif;
-      background-color: #fefefe;
-      text-align: center;
+      background-color: #fff7fa;
+      margin: 0;
       padding: 120px 20px 40px;
+      text-align: center;
     }
+
     .header-bar {
-      background-color: pink;
-      padding: 10px 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       position: fixed;
-      width: 100%;
       top: 0;
+      left: 0;
+      width: 100%;
+      background-color: pink;
+      padding: 10px 0;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       z-index: 9999;
     }
+
     .header-inner {
       max-width: 700px;
       margin: auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      width: 100%;
-    }
-    .hamburger {
-      cursor: pointer;
+      padding: 0 20px;
       font-size: 20px;
+      box-sizing: border-box;
     }
-    .menu-content {
-      display: none;
-      position: absolute;
-      top: 60px;
-      right: 10px;
-      background-color: white;
-      border: 1px solid #ccc;
-      padding: 10px;
-      z-index: 1000;
-    }
-    .menu-content a {
-      display: block;
-      text-decoration: none;
-      padding: 5px 0;
-      color: black;
-    }
-    h1 {
-      font-size: 24px;
-      color: #ff4081;
-    }
-    #reader {
-      width: 90%;
-      max-width: 400px;
-      margin: 20px auto;
-    }
-    .button-row {
-      margin-top: 30px;
-    }
-    .btn {
-      display: inline-block;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 16px;
-      margin: 10px;
+
+    .header-title {
       font-weight: bold;
-      text-decoration: none;
+    }
+
+    .menu-toggle {
+      font-size: 18px;
+      color: #333;
+      font-weight: bold;
       cursor: pointer;
     }
+
+    .menu {
+      display: none;
+      background-color: #f9f9f9;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-top: 10px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .menu li {
+      margin: 8px 0;
+    }
+
+    .menu a {
+      text-decoration: none;
+      color: #333;
+    }
+
+    h1 {
+      color: #ff4081;
+      font-size: 2em;
+      margin-top: 10px;
+    }
+
+    #preview {
+      width: 300px;
+      height: 300px;
+      border: 1px solid #ccc;
+      margin: 20px auto;
+      background: black;
+    }
+
+    #preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #status {
+      color: gray;
+      margin: 10px 0;
+    }
+
+    #result {
+      font-size: 1.2em;
+      margin-top: 20px;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      font-size: 1em;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      text-decoration: none;
+      text-align: center;
+      min-width: 180px;
+      box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+      cursor: pointer;
+    }
+
     .btn-home {
       background-color: #ff4081;
       color: white;
     }
+
     .btn-rescan {
       background-color: #ffeb3b;
       color: black;
@@ -86,7 +138,7 @@
 </head>
 <body>
 
-  <!-- トークンチェック -->
+  <!-- 🔐 トークンチェック -->
   <script>
     const token = localStorage.getItem("authToken");
     if (!token) {
@@ -94,33 +146,41 @@
     }
   </script>
 
-  <!-- ヘッダー -->
+  <!-- 🌸 ヘッダー -->
   <div class="header-bar">
     <div class="header-inner">
-      <div>🌸 SakuLink 🌸</div>
-      <div class="hamburger" onclick="toggleMenu()">📖 MENU ☰</div>
+      <div class="header-title">🌸 SakuLink 🌸</div>
+      <div class="menu-toggle" onclick="toggleMenu()">📖 MENU ☰</div>
     </div>
   </div>
-  <div class="menu-content" id="menu">
-    <a href="../dish-pages/home.html">🏠 Home</a>
-    <a href="../dish-pages/reading_list.html">📚 Readings</a>
-    <a href="../dish-pages/start_here.html">📖 Start Here</a>
-    <a href="../dish-pages/about.html">❓ About</a>
-    <a href="../dish-pages/terms.html">📄 Terms</a>
-    <a href="../dish-pages/privacy.html">🔐 Privacy</a>
-    <a href="#" onclick="logout()">🚪 Logout</a>
+
+  <!-- 📋 メニュー -->
+  <div id="menu" class="menu">
+    <ul>
+      <li><a href="../dish-pages/home.html">🏠 Home</a></li>
+      <li><a href="../dish-pages/reading_list.html">📚 Readings</a></li>
+      <li><a href="../dish-pages/start_here.html">📖 Start Here</a></li>
+      <li><a href="../dish-pages/about.html">❓ About SakuLink</a></li>
+      <li><a href="../dish-pages/terms.html">📄 Terms of Use</a></li>
+      <li><a href="../dish-pages/privacy.html">🔐 Privacy Policy</a></li>
+      <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+    </ul>
   </div>
 
-  <!-- タイトル -->
+  <!-- 📷 本文 -->
   <h1>QR Code Scanner</h1>
 
-  <!-- スキャナー表示 -->
-  <div id="reader"></div>
-  <div class="button-row">
+  <div id="preview"></div>
+  <p id="status">Preparing camera...<br><small style="color:gray">*It may take a few seconds to start scanning.</small></p>
+  <div id="result">Scanned result: <span id="output"></span></div>
+
+  <div class="button-container">
     <a class="btn btn-home" href="../dish-pages/home.html">🏡 Back to Home</a>
-    <button class="btn btn-rescan" onclick="rescan()">🔄 Rescan</button>
+    <button onclick="rescan()" class="btn btn-rescan">🔄 Rescan</button>
   </div>
 
+  <!-- 📦 スクリプト -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
     function toggleMenu() {
       const menu = document.getElementById("menu");
@@ -132,7 +192,9 @@
       window.location.href = "../dish-pages/login.html";
     }
 
-    const html5QrCode = new Html5Qrcode("reader");
+    const html5QrCode = new Html5Qrcode("preview");
+    const resultContainer = document.getElementById("output");
+    const statusText = document.getElementById("status");
     let hasRedirected = false;
 
     function onScanSuccess(decodedText) {
@@ -146,31 +208,50 @@
         }
 
         if (!idCode) {
-          alert("Invalid QR code.");
+          resultContainer.innerText = "No valid ID found in QR code.";
           return;
         }
 
+        resultContainer.innerText = idCode;
         hasRedirected = true;
         window.location.href = `../dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
       } catch (e) {
-        alert("QR code parsing error.");
-        console.error(e);
+        console.error("URL parsing error:", e);
+        resultContainer.innerText = "Failed to parse QR code.";
       }
     }
 
     function onScanFailure(error) {
-      // optional logging
+      // ignore
     }
 
     function rescan() {
       hasRedirected = false;
+      resultContainer.innerText = "";
       html5QrCode.stop().then(() => {
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          onScanSuccess,
+          onScanFailure
+        );
+        statusText.innerHTML = "Restarting camera. Please hold QR code steady.";
+      }).catch(err => {
+        statusText.textContent = "Camera restart error: " + err;
       });
     }
 
     // 初期起動
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      onScanSuccess,
+      onScanFailure
+    ).then(() => {
+      statusText.innerHTML = "Camera active. Please hold the QR code within the frame.";
+    }).catch(err => {
+      statusText.textContent = "Camera error: " + err;
+    });
   </script>
 </body>
 </html>
