@@ -6,14 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
-      font-family: 'M PLUS Rounded 1c', sans-serif;
-      text-align: center;
-      padding: 120px 20px 40px;
-      margin: 0;
+      font-family: sans-serif;
       background-color: #fff7fa;
+      margin: 0;
+      padding: 120px 20px 40px;
+      text-align: center;
     }
 
-    /* ヘッダー */
     .header-bar {
       position: fixed;
       top: 0;
@@ -22,7 +21,7 @@
       background-color: pink;
       padding: 10px 0;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      z-index: 999;
+      z-index: 9999;
     }
 
     .header-inner {
@@ -41,50 +40,52 @@
     }
 
     .menu-toggle {
-      font-size: 16px;
+      font-size: 18px;
+      color: #333;
       font-weight: bold;
       cursor: pointer;
-      color: #333;
     }
 
-    .dropdown-menu {
+    .menu {
       display: none;
-      position: fixed;
-      top: 58px;
-      right: 20px;
-      background-color: white;
+      background-color: #f9f9f9;
+      padding: 10px;
       border: 1px solid #ccc;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      z-index: 1001;
-      padding: 10px 15px;
-      width: 180px;
+      margin-top: 10px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
-    .dropdown-menu a {
-      display: block;
+    .menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .menu li {
+      margin: 8px 0;
+    }
+
+    .menu a {
       text-decoration: none;
       color: #333;
-      padding: 8px 0;
-      font-size: 0.95em;
-    }
-
-    .dropdown-menu a:hover {
-      color: #ff4081;
     }
 
     h1 {
-      margin-top: 20px;
-      font-size: 2em;
       color: #ff4081;
+      font-size: 2em;
+      margin-top: 10px;
     }
 
     #preview {
       width: 300px;
-      height: 350px;
+      height: 300px;
       border: 1px solid #ccc;
       margin: 20px auto;
       background: black;
+      position: relative;
     }
 
     #preview video {
@@ -94,9 +95,8 @@
     }
 
     #status {
-      font-size: 1em;
       color: gray;
-      margin-top: 10px;
+      margin: 10px 0;
     }
 
     #result {
@@ -109,6 +109,7 @@
       justify-content: center;
       gap: 16px;
       margin-top: 30px;
+      flex-wrap: wrap;
     }
 
     .btn {
@@ -131,18 +132,18 @@
     }
 
     .btn-rescan {
-      background-color: #FFEB3B;
+      background-color: #ffeb3b;
       color: black;
     }
   </style>
 </head>
 <body>
 
-  <!-- 🔐 トークンチェック -->
+  <!-- トークンチェック -->
   <script>
     const token = localStorage.getItem("authToken");
     if (!token) {
-      window.location.href = "login.html";
+      window.location.href = "../dish-pages/login.html";
     }
   </script>
 
@@ -154,47 +155,42 @@
     </div>
   </div>
 
-  <!-- 展開メニュー（統一版） -->
-  <div class="dropdown-menu" id="dropdownMenu">
-    <a href="home.html">🏠 Home</a>
-    <a href="reading_list.html">📚 Readings</a>
-    <a href="start_here.html">📖 Start Here</a>
-    <a href="about.html">❓ About</a>
-    <a href="terms.html">📄 Terms</a>
-    <a href="privacy.html">🔐 Privacy</a>
-    <a href="#" onclick="logout()">🚪 Logout</a>
+  <!-- メニュー -->
+  <div id="menu" class="menu">
+    <ul>
+      <li><a href="../dish-pages/home.html">🏠 Home</a></li>
+      <li><a href="../dish-pages/reading_list.html">📚 Readings</a></li>
+      <li><a href="../dish-pages/start_here.html">📖 Start Here</a></li>
+      <li><a href="../dish-pages/about.html">❓ About SakuLink</a></li>
+      <li><a href="../dish-pages/terms.html">📄 Terms of Use</a></li>
+      <li><a href="../dish-pages/privacy.html">🔐 Privacy Policy</a></li>
+      <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+    </ul>
   </div>
 
+  <!-- 本文 -->
   <h1>QR Code Scanner</h1>
 
   <div id="preview"></div>
-
-  <p id="status">
-    Preparing camera...<br>
-    <small style="color:gray">*It may take a few seconds to start scanning.</small>
-  </p>
-
+  <p id="status">Preparing camera...<br><small style="color:gray">*It may take a few seconds to start scanning.</small></p>
   <div id="result">Scanned result: <span id="output"></span></div>
 
   <div class="button-container">
-    <button onclick="goHome()" class="btn btn-home">🏠 Back to Home</button>
+    <a class="btn btn-home" href="../dish-pages/home.html">🏡 Back to Home</a>
     <button onclick="rescan()" class="btn btn-rescan">🔄 Rescan</button>
   </div>
 
+  <!-- スクリプト -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
     function toggleMenu() {
-      const menu = document.getElementById("dropdownMenu");
+      const menu = document.getElementById("menu");
       menu.style.display = (menu.style.display === "block") ? "none" : "block";
     }
 
     function logout() {
       localStorage.removeItem("authToken");
-      window.location.href = "login.html";
-    }
-
-    function goHome() {
-      window.location.href = "home.html";
+      window.location.href = "../dish-pages/login.html";
     }
 
     const resultContainer = document.getElementById("output");
@@ -202,7 +198,7 @@
     const html5QrCode = new Html5Qrcode("preview");
     let hasRedirected = false;
 
-    function onScanSuccess(decodedText, decodedResult) {
+    function onScanSuccess(decodedText) {
       if (hasRedirected) return;
       let idCode = decodedText.trim();
 
@@ -227,7 +223,7 @@
     }
 
     function onScanFailure(error) {
-      // do nothing
+      // optional
     }
 
     function rescan() {
