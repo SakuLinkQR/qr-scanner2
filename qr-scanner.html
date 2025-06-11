@@ -6,69 +6,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
-      font-family: 'M PLUS Rounded 1c', sans-serif;
+      font-family: sans-serif;
       text-align: center;
-      padding: 0;
-      margin: 0;
+      padding: 100px 20px 40px;
+      max-width: 600px;
+      margin: auto;
       background-color: #fff7fa;
     }
 
-    /* 正規ヘッダー（ホームと同じ） */
     .header-bar {
-      background-color: #ffc1d6; /* ホーム画面と統一 */
-      color: #333;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: pink;
+      padding: 10px 0;
+      z-index: 9999;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-inner {
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 20px;
+      padding: 0 16px;
+      box-sizing: border-box;
       font-size: 20px;
-      position: fixed;
-      top: 0;
-      width: 100%;
-      z-index: 1000;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
-    .header-title {
-      font-weight: bold;
-    }
-
-    .menu-toggle {
-      font-size: 16px;
-      font-weight: bold;
+    .hamburger {
       cursor: pointer;
+      font-size: 20px;
+      color: #333;
     }
 
-    .dropdown-menu {
+    .menu {
       display: none;
-      position: fixed;
-      top: 58px;
-      right: 20px;
-      background-color: white;
+      background-color: #f9f9f9;
+      padding: 10px;
       border: 1px solid #ccc;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      z-index: 1001;
-      padding: 10px 15px;
-      width: 180px;
+      margin-top: 10px;
     }
 
-    .dropdown-menu a {
-      display: block;
+    .menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .menu li {
+      margin: 8px 0;
+    }
+
+    .menu a {
       text-decoration: none;
       color: #333;
-      padding: 8px 0;
-      font-size: 0.95em;
-    }
-
-    .dropdown-menu a:hover {
-      color: #ff4081;
     }
 
     h1 {
-      margin-top: 90px;
       font-size: 2em;
       color: #ff4081;
+      margin-top: 30px;
     }
 
     #preview {
@@ -128,15 +130,21 @@
   </style>
 </head>
 <body>
+  <!-- 🌸 正規ヘッダー -->
   <div class="header-bar">
-    <div class="header-title">🌸 SakuLink 🌸</div>
-    <div class="menu-toggle" onclick="toggleMenu()">📖 MENU ☰</div>
+    <div class="header-inner">
+      <div class="header-title">🌸 SakuLink 🌸</div>
+      <div class="hamburger" onclick="toggleMenu()">📖 MENU ☰</div>
+    </div>
   </div>
 
-  <div class="dropdown-menu" id="dropdownMenu">
-    <a href="../dish-pages/home.html">🏠 Home</a>
-    <a href="../dish-pages/reading_list.html">📚 Readings</a>
-    <a href="#" onclick="logout()">🔓 Logout</a>
+  <!-- 📋 メニュー -->
+  <div id="menu" class="menu">
+    <ul>
+      <li><a href="../dish-pages/home.html">Home</a></li>
+      <li><a href="../dish-pages/reading_list.html">Readings</a></li>
+      <li><a href="#" onclick="logout()">🔓 Logout</a></li>
+    </ul>
   </div>
 
   <h1>QR Code Scanner</h1>
@@ -162,12 +170,17 @@
     let hasRedirected = false;
 
     function toggleMenu() {
-      const menu = document.getElementById("dropdownMenu");
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
+      const menu = document.getElementById("menu");
+      menu.style.display = (menu.style.display === "block") ? "none" : "block";
     }
 
     function logout() {
       localStorage.removeItem("authToken");
+      window.location.href = "../login.html";
+    }
+
+    const token = localStorage.getItem("authToken");
+    if (!token) {
       window.location.href = "../login.html";
     }
 
