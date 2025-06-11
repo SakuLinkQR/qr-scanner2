@@ -8,115 +8,169 @@
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f8f8f8;
+      font-family: sans-serif;
+      background-color: #fefefe;
+      text-align: center;
+      padding: 120px 20px 40px;
     }
-
     .header-bar {
       background-color: pink;
-      color: black;
-      padding: 10px;
-    }
-
-    .header-inner {
+      padding: 10px 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    .hamburger {
-      font-size: 24px;
-      cursor: pointer;
-    }
-
-    #qr-reader {
+      position: fixed;
       width: 100%;
-      max-width: 400px;
-      margin: 30px auto;
+      top: 0;
+      z-index: 9999;
     }
-
-    .button-container {
-      text-align: center;
+    .header-inner {
+      max-width: 700px;
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .hamburger {
+      cursor: pointer;
+      font-size: 20px;
+    }
+    .menu-content {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 10px;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      z-index: 1000;
+    }
+    .menu-content a {
+      display: block;
+      text-decoration: none;
+      padding: 5px 0;
+      color: black;
+    }
+    h1 {
+      font-size: 24px;
+      color: #ff4081;
+    }
+    #reader {
+      width: 90%;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+    .button-row {
       margin-top: 30px;
     }
-
-    button {
+    .btn {
+      display: inline-block;
       padding: 12px 24px;
-      margin: 10px;
-      font-size: 18px;
-      border: none;
       border-radius: 8px;
+      font-size: 16px;
+      margin: 10px;
+      font-weight: bold;
+      text-decoration: none;
       cursor: pointer;
     }
-
-    .home-btn {
-      background-color: #66ccff;
+    .btn-home {
+      background-color: #ff4081;
       color: white;
     }
-
-    .rescan-btn {
-      background-color: #999;
-      color: white;
+    .btn-rescan {
+      background-color: #ffeb3b;
+      color: black;
     }
   </style>
 </head>
 <body>
 
+  <!-- トークンチェック -->
+  <script>
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      window.location.href = "../dish-pages/login.html";
+    }
+  </script>
+
+  <!-- ヘッダー -->
   <div class="header-bar">
     <div class="header-inner">
       <div>🌸 SakuLink 🌸</div>
       <div class="hamburger" onclick="toggleMenu()">📖 MENU ☰</div>
     </div>
   </div>
+  <div class="menu-content" id="menu">
+    <a href="../dish-pages/home.html">🏠 Home</a>
+    <a href="../dish-pages/reading_list.html">📚 Readings</a>
+    <a href="../dish-pages/start_here.html">📖 Start Here</a>
+    <a href="../dish-pages/about.html">❓ About</a>
+    <a href="../dish-pages/terms.html">📄 Terms</a>
+    <a href="../dish-pages/privacy.html">🔐 Privacy</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </div>
 
-  <h2 style="text-align: center; margin-top: 20px;">QR Code Scanner</h2>
+  <!-- タイトル -->
+  <h1>QR Code Scanner</h1>
 
-  <div id="qr-reader"></div>
-
-  <div class="button-container">
-    <button class="home-btn" onclick="goHome()">🏡 Home</button>
-    <button class="rescan-btn" onclick="startScanner()">🔄 Rescan</button>
+  <!-- スキャナー表示 -->
+  <div id="reader"></div>
+  <div class="button-row">
+    <a class="btn btn-home" href="../dish-pages/home.html">🏡 Back to Home</a>
+    <button class="btn btn-rescan" onclick="rescan()">🔄 Rescan</button>
   </div>
 
   <script>
-    const html5QrCode = new Html5Qrcode("qr-reader");
+    function toggleMenu() {
+      const menu = document.getElementById("menu");
+      menu.style.display = (menu.style.display === "block") ? "none" : "block";
+    }
 
-    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-      html5QrCode.stop().then(() => {
-        // ✅ ここで index.html に遷移（dish_detail の代わり）
-        window.location.href = `index.html?id=${decodedText}`;
-      }).catch(err => {
-        console.error("停止エラー", err);
-      });
-    };
+    function logout() {
+      localStorage.removeItem("authToken");
+      window.location.href = "../dish-pages/login.html";
+    }
 
-    const startScanner = () => {
-      Html5Qrcode.getCameras().then(devices => {
-        if (devices && devices.length) {
-          const cameraId = devices[0].id;
-          html5QrCode.start(cameraId, {
-            fps: 10,
-            qrbox: 250
-          }, qrCodeSuccessCallback);
+    const html5QrCode = new Html5Qrcode("reader");
+    let hasRedirected = false;
+
+    function onScanSuccess(decodedText) {
+      if (hasRedirected) return;
+
+      let idCode = decodedText.trim();
+      try {
+        if (decodedText.startsWith("http")) {
+          const url = new URL(decodedText);
+          idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
         }
-      }).catch(err => {
-        console.error("カメラエラー", err);
+
+        if (!idCode) {
+          alert("Invalid QR code.");
+          return;
+        }
+
+        hasRedirected = true;
+        window.location.href = `../dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+      } catch (e) {
+        alert("QR code parsing error.");
+        console.error(e);
+      }
+    }
+
+    function onScanFailure(error) {
+      // optional logging
+    }
+
+    function rescan() {
+      hasRedirected = false;
+      html5QrCode.stop().then(() => {
+        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
       });
-    };
+    }
 
-    const goHome = () => {
-      window.location.href = "index.html";
-    };
-
-    const toggleMenu = () => {
-      alert("メニューをここに開く処理を入れてください");
-    };
-
-    // 自動起動
-    startScanner();
+    // 初期起動
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
   </script>
-
 </body>
 </html>
