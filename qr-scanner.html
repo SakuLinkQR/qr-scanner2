@@ -200,12 +200,22 @@
     function onScanSuccess(decodedText) {
       if (hasRedirected) return;
 
-      let idCode = decodedText.trim();
+      // QRコードがURLでなければ拒否
+      if (!decodedText.startsWith("http")) {
+        window.location.href = "../dish-pages/invalid_qr.html";
+        return;
+      }
+
+      // SakuLinkの正規URL以外なら拒否
+      if (!decodedText.startsWith("https://sakulinkqr.github.io/dish-pages/")) {
+        window.location.href = "../dish-pages/invalid_qr.html";
+        return;
+      }
+
+      let idCode = "";
       try {
-        if (decodedText.startsWith("http")) {
-          const url = new URL(decodedText);
-          idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
-        }
+        const url = new URL(decodedText);
+        idCode = url.searchParams.get("id_code") || url.searchParams.get("id") || "";
 
         if (!idCode) {
           resultContainer.innerText = "No valid ID found in QR code.";
