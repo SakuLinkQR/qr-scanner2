@@ -224,7 +224,7 @@
 
         resultContainer.innerText = idCode;
         hasRedirected = true;
-        window.location.href = `../dish-pages/index.html?id_code=${encodeURIComponent(idCode)}`;
+        window.location.href = `../dish-pages/dish_detail.html?id_code=${encodeURIComponent(idCode)}`;
       } catch (e) {
         console.error("URL parsing error:", e);
         resultContainer.innerText = "Failed to parse QR code.";
